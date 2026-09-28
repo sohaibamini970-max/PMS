@@ -1,24 +1,24 @@
-﻿# Dockerfile.vercel
+# Dockerfile.vercel
 
-# Stage 1: Build the application
+# Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy the project file and restore dependencies first to leverage Docker's layer caching
+# Copy csproj and restore dependencies first (for better caching)
 COPY *.csproj ./
 RUN dotnet restore
 
-# Copy the rest of the source code and publish the app
+# Copy everything else and build the app
 COPY . ./
 RUN dotnet publish -c Release -o /app/publish
 
-# Stage 2: Create the runtime image
+# Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish ./
 
-# Expose the port Vercel expects
+# Expose port 8080 (Vercel routes to this by default for non-root users)
 EXPOSE 8080
 
-# Set the entry point. IMPORTANT: Replace YourProjectName.dll with your actual DLL name.
-ENTRYPOINT ["dotnet", "Project_Management_System.dll"]
+# IMPORTANT: Replace 'PMS.dll' with your actual project DLL name
+ENTRYPOINT ["dotnet", "PMS.dll"]
