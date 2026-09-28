@@ -1,0 +1,200 @@
+﻿@{
+    ViewData["Title"] = "Audit Logs";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Audit Logs
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">Track every user action and system event.</p>
+        </div>
+        <button class="px-6 py-3 bg-brand text-sidebar text-base font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-glow flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Export Logs
+        </button>
+    </div>
+
+    <!-- Summary -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-blue-100 uppercase">Total Events</p>
+            <h3 class="text-4xl font-black mt-2">2,481</h3>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-emerald-100 uppercase">Today</p>
+            <h3 class="text-4xl font-black mt-2">47</h3>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-amber-100 uppercase">This Week</p>
+            <h3 class="text-4xl font-black mt-2">312</h3>
+        </div>
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-red-100 uppercase">Warnings</p>
+            <h3 class="text-4xl font-black mt-2">6</h3>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+
+        <!-- Filters -->
+        <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row gap-4">
+            <div class="relative flex-1">
+                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" placeholder="Search events..."
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-base rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand/60">
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <button class="px-4 py-2.5 bg-brand text-sidebar text-sm font-bold rounded-lg">All</button>
+                <button class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Create</button>
+                <button class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Update</button>
+                <button class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Delete</button>
+                <button class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Login</button>
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wide">
+                        <th class="text-left py-4 px-5 font-bold">Timestamp</th>
+                        <th class="text-left py-4 px-5 font-bold">User</th>
+                        <th class="text-left py-4 px-5 font-bold">Action</th>
+                        <th class="text-left py-4 px-5 font-bold">Details</th>
+                        <th class="text-left py-4 px-5 font-bold">IP Address</th>
+                        <th class="text-left py-4 px-5 font-bold">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-5 text-sm font-semibold text-gray-700">Sep 21, 2026 · 10:24 AM</td>
+                        <td class="py-4 px-5">
+                            <div class="flex items-center gap-3">
+                                <img class="w-8 h-8 rounded-full" src="https://i.pravatar.cc/100?img=11">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">Sarah Ahmed</p>
+                                    <p class="text-xs text-gray-500">Admin</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-blue-100 text-blue-700 rounded-full">LOGIN</span></td>
+                        <td class="py-4 px-5 text-sm text-gray-600">Signed in successfully</td>
+                        <td class="py-4 px-5 text-sm font-mono text-gray-500">192.168.1.24</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full">SUCCESS</span></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-5 text-sm font-semibold text-gray-700">Sep 21, 2026 · 10:15 AM</td>
+                        <td class="py-4 px-5">
+                            <div class="flex items-center gap-3">
+                                <img class="w-8 h-8 rounded-full" src="https://i.pravatar.cc/100?img=11">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">Sarah Ahmed</p>
+                                    <p class="text-xs text-gray-500">Admin</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-purple-100 text-purple-700 rounded-full">CREATE</span></td>
+                        <td class="py-4 px-5 text-sm text-gray-600">Created new user: Mike T.</td>
+                        <td class="py-4 px-5 text-sm font-mono text-gray-500">192.168.1.24</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full">SUCCESS</span></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-5 text-sm font-semibold text-gray-700">Sep 21, 2026 · 09:48 AM</td>
+                        <td class="py-4 px-5">
+                            <div class="flex items-center gap-3">
+                                <img class="w-8 h-8 rounded-full" src="https://i.pravatar.cc/100?img=1">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">Sarah J.</p>
+                                    <p class="text-xs text-gray-500">Project Manager</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-amber-100 text-amber-700 rounded-full">UPDATE</span></td>
+                        <td class="py-4 px-5 text-sm text-gray-600">Updated project: Office Complex</td>
+                        <td class="py-4 px-5 text-sm font-mono text-gray-500">10.0.0.45</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full">SUCCESS</span></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-5 text-sm font-semibold text-gray-700">Sep 21, 2026 · 09:30 AM</td>
+                        <td class="py-4 px-5">
+                            <div class="flex items-center gap-3">
+                                <img class="w-8 h-8 rounded-full" src="https://i.pravatar.cc/100?img=3">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">Mike T.</p>
+                                    <p class="text-xs text-gray-500">Member</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-red-100 text-red-700 rounded-full">DELETE</span></td>
+                        <td class="py-4 px-5 text-sm text-gray-600">Attempted to delete task (denied)</td>
+                        <td class="py-4 px-5 text-sm font-mono text-gray-500">10.0.0.72</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-red-100 text-red-700 rounded-full">DENIED</span></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-5 text-sm font-semibold text-gray-700">Sep 20, 2026 · 05:12 PM</td>
+                        <td class="py-4 px-5">
+                            <div class="flex items-center gap-3">
+                                <img class="w-8 h-8 rounded-full" src="https://i.pravatar.cc/100?img=6">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">Emily R.</p>
+                                    <p class="text-xs text-gray-500">Member</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-blue-100 text-blue-700 rounded-full">LOGIN</span></td>
+                        <td class="py-4 px-5 text-sm text-gray-600">Signed in successfully</td>
+                        <td class="py-4 px-5 text-sm font-mono text-gray-500">10.0.0.18</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full">SUCCESS</span></td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 px-5 text-sm font-semibold text-gray-700">Sep 20, 2026 · 02:45 PM</td>
+                        <td class="py-4 px-5">
+                            <div class="flex items-center gap-3">
+                                <img class="w-8 h-8 rounded-full" src="https://i.pravatar.cc/100?img=8">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">David L.</p>
+                                    <p class="text-xs text-gray-500">Member</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-gray-100 text-gray-700 rounded-full">LOGOUT</span></td>
+                        <td class="py-4 px-5 text-sm text-gray-600">Session ended</td>
+                        <td class="py-4 px-5 text-sm font-mono text-gray-500">10.0.0.91</td>
+                        <td class="py-4 px-5"><span class="px-2.5 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full">SUCCESS</span></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="p-5 border-t border-gray-100 flex justify-between items-center">
+            <p class="text-sm text-gray-500 font-medium">Showing <span class="font-bold text-gray-900">1-6</span> of <span class="font-bold text-gray-900">2,481</span> events</p>
+            <div class="flex gap-1">
+                <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm font-semibold text-gray-500 hover:bg-gray-50">‹</button>
+                <button class="px-3 py-1.5 bg-brand text-sidebar rounded-md text-sm font-bold">1</button>
+                <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-50">2</button>
+                <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-50">3</button>
+                <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm font-semibold text-gray-500 hover:bg-gray-50">›</button>
+            </div>
+        </div>
+
+    </div>
+</div>

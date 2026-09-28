@@ -1,0 +1,710 @@
+﻿@model Project_Management_System.ViewModels.TeamsIndexViewModel
+@{
+    ViewData["Title"] = "Teams & Members";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var canManage = Model.CanManage;
+    var isMemberRole = Model.IsMemberRole;
+    var isTeamLeader = Model.IsTeamLeader;
+    var leadingTeamIds = Model.LeadingTeamIds;
+
+    var showLeftColumn = !isMemberRole || isTeamLeader;
+
+    string ColorGrad(string c) => c switch
+    {
+        "emerald" => "from-emerald-500 to-teal-500",
+        "purple"  => "from-purple-500 to-pink-500",
+        "blue"    => "from-blue-500 to-indigo-500",
+        "amber"   => "from-amber-500 to-orange-500",
+        "red"     => "from-red-500 to-rose-500",
+        _         => "from-gray-500 to-gray-600"
+    };
+    string ColorBorder(string c) => c switch
+    {
+        "emerald" => "border-emerald-400",
+        "purple"  => "border-purple-400",
+        "blue"    => "border-blue-400",
+        "amber"   => "border-amber-400",
+        "red"     => "border-red-400",
+        _         => "border-gray-300"
+    };
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    @Html.AntiForgeryToken()
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Teams & Members
+            </h1>
+            <p class="text-xl text-gray-600 mt-2 font-medium">
+                @(isMemberRole && !isTeamLeader
+                    ? "Your teams and your task assignments."
+                    : isTeamLeader
+                        ? "You lead a team — assign tasks to your members."
+                        : "Drag a task onto a team or member — or use the dropdowns.")
+            </p>
+        </div>
+        <div class="flex gap-3">
+            @if (canManage)
+            {
+                <button onclick="openAddTeamModal()" class="px-5 py-3 bg-white border-2 border-emerald-500 text-emerald-700 text-lg font-bold rounded-lg hover:bg-emerald-50 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    Add Team
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Two-Column Layout -->
+    <div class="grid grid-cols-1 @(showLeftColumn ? "lg:grid-cols-2" : "") gap-6">
+
+        @if (showLeftColumn)
+        {
+            <!-- ================= LEFT: Projects & Tasks ================= -->
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-[calc(100vh-200px)]">
+                <div class="flex justify-between items-center mb-5 pb-4 border-b border-gray-100">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900">Projects & Tasks</h2>
+                        <p class="text-base text-gray-500 mt-1">Drag a task to a team/member on the right</p>
+                    </div>
+                    <span class="px-4 py-1.5 text-base font-bold bg-brand/20 text-yellow-700 rounded-full">@Model.Projects.Count Projects</span>
+                </div>
+
+                <div class="overflow-y-auto flex-1 space-y-5 pr-2">
+
+                    @if (Model.Projects.Count == 0)
+                    {
+                        <div class="text-center py-16 text-gray-400 italic text-lg">No projects yet.</div>
+                    }
+
+                    @foreach (var proj in Model.Projects)
+                    {
+                        var gradient = proj.ProjectStatus switch
+                        {
+                            ProjectStatus.Active    => "from-emerald-500 via-emerald-400 to-teal-400",
+                            ProjectStatus.AtRisk    => "from-amber-500 via-orange-500 to-orange-400",
+                            ProjectStatus.Completed => "from-blue-500 via-blue-500 to-indigo-500",
+                            ProjectStatus.Done      => "from-purple-500 via-purple-500 to-indigo-500",
+                            _                       => "from-gray-500 via-gray-400 to-gray-500"
+                        };
+
+                        <div class="rounded-xl overflow-hidden border-2 border-gray-200 shadow-lg">
+                            <!-- Project Header -->
+                            <div class="bg-gradient-to-r @gradient px-4 py-3">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 rounded-lg bg-white/25 backdrop-blur-sm flex items-center justify-center text-white font-black text-lg shadow">
+                                        @proj.ProjectInitials
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-2xl font-black text-white drop-shadow">@proj.ProjectName</h3>
+                                        <p class="text-base text-white/90 font-semibold">@(proj.ProjectClient ?? "—")</p>
+                                    </div>
+                                </div>
+
+                                <!-- Assign Project -->
+                                @if (canManage)
+                                {
+                                    <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-md px-2 py-1.5">
+                                        <label class="text-sm font-bold text-white whitespace-nowrap">Assign Project to:</label>
+                                        <select onchange="assignProject('@proj.ProjectId', this)"
+                                                class="flex-1 text-sm bg-white border border-white/40 text-gray-800 rounded px-2 py-1 font-semibold cursor-pointer">
+                                            <option value="">Select team/member...</option>
+                                            <optgroup label="Teams">
+                                                @foreach (var tm in Model.Teams)
+                                                {
+                                                    <option value="team:@tm.Id" selected="@(proj.AssignedTeamId == tm.Id)">@tm.Name</option>
+                                                }
+                                            </optgroup>
+                                            <optgroup label="Members">
+                                                @foreach (var m in Model.Members)
+                                                {
+                                                    <option value="member:@m.Id" selected="@(proj.AssignedMemberId == m.Id)">@m.FullName</option>
+                                                }
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    if (proj.AssignedTeamName != null || proj.AssignedMemberName != null)
+                                    {
+                                        <p class="text-sm text-white font-semibold mt-1.5">
+                                            Currently assigned to:
+                                            <span class="font-black">@(proj.AssignedTeamName ?? proj.AssignedMemberName)</span>
+                                        </p>
+                                    }
+                                }
+                            </div>
+
+                            <!-- Tasks -->
+                            <div class="p-3 space-y-2 bg-gray-50">
+                                @if (proj.Tasks.Count == 0)
+                                {
+                                    <p class="text-sm text-gray-400 italic text-center py-3">No tasks in this project.</p>
+                                }
+
+                                @foreach (var t in proj.Tasks)
+                                {
+                                    var borderClass = t.Priority switch
+                                    {
+                                        TaskPriority.Critical => "border-red-600",
+                                        TaskPriority.High     => "border-red-500",
+                                        TaskPriority.Medium   => "border-amber-500",
+                                        _                     => "border-green-500"
+                                    };
+                                    var prioBadge = t.Priority switch
+                                    {
+                                        TaskPriority.Critical => "bg-red-100 text-red-700",
+                                        TaskPriority.High     => "bg-red-100 text-red-700",
+                                        TaskPriority.Medium   => "bg-amber-100 text-amber-700",
+                                        _                     => "bg-green-100 text-green-700"
+                                    };
+
+                                    <div class="bg-white rounded-lg border-l-4 @borderClass p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                                         draggable="@(canManage ? "true" : "false")"
+                                         ondragstart="dragStart(event, '@t.Id')"
+                                         id="task-@t.Id">
+
+                                        <div class="flex justify-between items-start mb-1.5">
+                                            <span class="px-2.5 py-0.5 text-sm font-black @prioBadge rounded-full">@t.Priority.ToString().ToUpper()</span>
+                                            <span class="text-sm text-gray-500 font-bold">@t.Status</span>
+                                        </div>
+                                        <h4 class="text-base font-bold text-gray-900 mb-2">@t.Title</h4>
+
+                                        @if (t.AssigneeTeamName != null)
+                                        {
+                                            <p class="text-sm text-emerald-700 font-bold mb-1.5">👥 Team: @t.AssigneeTeamName</p>
+                                        }
+                                        else if (t.AssigneeName != null)
+                                        {
+                                            <p class="text-sm text-blue-700 font-bold mb-1.5">👤 @t.AssigneeName</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-sm text-gray-400 italic mb-1.5">Unassigned</p>
+                                        }
+
+                                        @if (canManage)
+                                        {
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <label class="text-sm font-semibold text-gray-500 whitespace-nowrap">Assign to:</label>
+                                                <select onchange="assignTask('@t.Id', this)"
+                                                        class="flex-1 text-sm bg-white border border-gray-300 text-gray-700 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-brand">
+                                                    <option value="">Select...</option>
+                                                    <optgroup label="Teams">
+                                                        @foreach (var tm in Model.Teams)
+                                                        {
+                                                            <option value="team:@tm.Id" selected="@(t.AssigneeTeamId == tm.Id)">@tm.Name</option>
+                                                        }
+                                                    </optgroup>
+                                                    <optgroup label="Members">
+                                                        @foreach (var m in Model.Members)
+                                                        {
+                                                            <option value="member:@m.Id" selected="@(t.AssigneeId == m.Id)">@m.FullName</option>
+                                                        }
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- ================= RIGHT: Teams & Members ================= -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-[calc(100vh-200px)]">
+
+            <!-- Tab Toggle -->
+            <div class="flex gap-2 p-1.5 bg-gray-100 rounded-lg mb-5">
+                <button id="teamsTabBtn" onclick="switchTab('teams')" class="flex-1 py-3 bg-brand text-sidebar text-lg font-bold rounded-md shadow-sm transition-all">Teams</button>
+                <button id="membersTabBtn" onclick="switchTab('members')" class="flex-1 py-3 bg-white text-gray-700 text-lg font-bold rounded-md shadow-sm transition-all">Members</button>
+            </div>
+
+            <div class="overflow-y-auto flex-1 space-y-4 pr-2">
+
+                <!-- TEAMS VIEW -->
+                <div id="teamsView" class="space-y-5">
+                    @if (Model.Teams.Count == 0)
+                    {
+                        <p class="text-base text-gray-400 italic text-center py-8">No teams yet. Click "Add Team" to create one.</p>
+                    }
+
+                    @foreach (var team in Model.Teams)
+                    {
+                        var grad = ColorGrad(team.Color);
+                        var brd  = ColorBorder(team.Color);
+                        var iLeadThis = leadingTeamIds.Contains(team.Id);
+
+                        <div class="rounded-xl border-2 @brd shadow-lg overflow-hidden @(iLeadThis ? "ring-2 ring-amber-400" : "")"
+                             ondragover="dragOver(event)"
+                             ondragleave="dragLeave(event)"
+                             ondrop="dropOnTarget(event, 'team', '@team.Id')"
+                             id="drop-team-@team.Id">
+
+                            <div class="bg-gradient-to-r @grad px-4 py-3">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-12 h-12 rounded-lg bg-white/25 backdrop-blur-sm flex items-center justify-center text-white font-black text-lg">
+                                        @team.Name.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="text-2xl font-black text-white drop-shadow truncate">
+                                            @team.Name
+                                            @if (iLeadThis)
+                                            {
+                                                <span class="ml-1 text-sm font-black bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full align-middle">YOU LEAD</span>
+                                            }
+                                        </h3>
+                                        <p class="text-sm text-white/90 font-semibold">@team.Members.Count member@(team.Members.Count != 1 ? "s" : "")</p>
+
+                                        @if (!string.IsNullOrEmpty(team.LeaderName))
+                                        {
+                                            <p class="text-sm text-white font-bold flex items-center gap-1 mt-0.5">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" /></svg>
+                                                Leader: @team.LeaderName
+                                            </p>
+                                        }
+                                    </div>
+                                    <span class="px-3 py-1 text-base font-bold bg-white/25 text-white rounded-full"
+                                          id="count-team-@team.Id">@(team.ProjectCount + team.TaskCount)</span>
+                                    @if ((canManage && !isTeamLeader) || (isTeamLeader && iLeadThis) || (!isMemberRole && canManage))
+                                    {
+                                        <button onclick="deleteTeam('@team.Id', '@team.Name')" class="text-white/80 hover:text-white p-1">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    }
+                                </div>
+                                @if (canManage && !isTeamLeader)
+                                {
+                                    <button onclick="openAddMembersModal('@team.Id', '@team.Name')"
+                                            class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-md text-white text-sm font-bold flex items-center justify-center gap-1">
+                                        + Add Members
+                                    </button>
+                                }
+                            </div>
+
+                            <!-- Members -->
+                            <div class="p-3 bg-white space-y-2">
+                                @foreach (var m in team.Members)
+                                {
+                                    <div class="rounded-lg border-2 @(m.IsLeader ? "border-amber-400 bg-amber-50" : "border-gray-200 bg-gray-50") p-2.5 flex items-center gap-3">
+                                        <div class="relative">
+                                            <img class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
+                                                 src="@(string.IsNullOrEmpty(m.ProfilePictureUrl) ? $"https://i.pravatar.cc/100?u={m.UserId}" : m.ProfilePictureUrl)">
+                                            @if (m.IsLeader)
+                                            {
+                                                <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-black shadow">
+                                                    ★
+                                                </span>
+                                            }
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-base font-bold text-gray-900 truncate">
+                                                @m.FullName
+                                                @if (m.IsLeader)
+                                                {
+                                                    <span class="text-amber-700 font-black text-sm">· LEADER</span>
+                                                }
+                                            </p>
+                                            <p class="text-sm text-gray-500">@m.Role</p>
+                                        </div>
+
+                                        @if (canManage && !isTeamLeader)
+                                        {
+                                            if (!m.IsLeader)
+                                            {
+                                                <button onclick="setLeader('@team.Id', '@m.UserId')"
+                                                        class="text-sm font-bold text-amber-700 hover:text-amber-900 px-2.5 py-1 rounded border border-amber-300 hover:bg-amber-100">
+                                                    Set Leader
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button onclick="removeLeader('@team.Id')"
+                                                        class="text-sm font-bold text-gray-500 hover:text-red-600 px-2.5 py-1 rounded border border-gray-300 hover:bg-gray-100">
+                                                    Unset
+                                                </button>
+                                            }
+
+                                            <button onclick="removeMember('@team.Id', '@m.UserId', '@m.FullName')" class="text-gray-400 hover:text-red-500">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                                @if (team.Members.Count == 0)
+                                {
+                                    <p class="text-sm text-gray-400 italic text-center py-2">No members yet.</p>
+                                }
+                            </div>
+
+                            <!-- Drop zone for tasks/projects -->
+                            <div class="px-3 pb-3 bg-white">
+                                <p class="text-sm font-bold text-gray-500 mb-1.5 uppercase">Assigned here</p>
+                                <div class="min-h-[60px] border-2 border-dashed @brd rounded-lg p-2 flex flex-col gap-2 bg-gray-50/50"
+                                     id="assigned-team-@team.Id">
+                                    @if (team.ProjectCount == 0 && team.TaskCount == 0)
+                                    {
+                                        <p class="text-sm text-gray-400 italic text-center mt-2">Drop a task here</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-sm text-gray-700 font-semibold text-center py-1">
+                                            📁 @team.ProjectCount project(s) &nbsp;·&nbsp; ✅ @team.TaskCount task(s)
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- MEMBERS VIEW -->
+                <div id="membersView" class="space-y-3" style="display:none;">
+                    @foreach (var member in Model.Members)
+                    {
+                        <div class="rounded-xl border-2 border-gray-300 shadow-md overflow-hidden"
+                             ondragover="dragOver(event)"
+                             ondragleave="dragLeave(event)"
+                             ondrop="dropOnTarget(event, 'member', '@member.Id')"
+                             id="drop-member-@member.Id">
+
+                            <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <img class="w-14 h-14 rounded-full border-4 border-white shadow-md object-cover"
+                                         src="@(string.IsNullOrEmpty(member.ProfilePictureUrl) ? $"https://i.pravatar.cc/150?u={member.Id}" : member.ProfilePictureUrl)">
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="text-xl font-black text-white truncate">@member.FullName</h3>
+                                        <p class="text-sm text-gray-300 font-semibold">@member.Role • @member.Email</p>
+                                    </div>
+                                    <span class="px-3 py-1 text-base font-bold bg-white/25 text-white rounded-full"
+                                          id="count-member-@member.Id">@(member.ProjectCount + member.TaskCount)</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-white">
+                                <p class="text-sm font-bold text-gray-500 mb-1.5 uppercase">Assigned</p>
+                                <div class="min-h-[60px] border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col gap-2 bg-gray-50"
+                                     id="assigned-member-@member.Id">
+                                    @if (member.ProjectCount == 0 && member.TaskCount == 0)
+                                    {
+                                        <p class="text-sm text-gray-400 italic text-center mt-2">Drop tasks here</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-sm text-gray-700 font-semibold text-center py-1">
+                                            📁 @member.ProjectCount &nbsp;·&nbsp; ✅ @member.TaskCount
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ADD TEAM MODAL                               -->
+<!-- ============================================ -->
+@if (canManage && !isTeamLeader)
+{
+    <div id="addTeamModal" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-5 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">Create New Team</h3>
+                <button onclick="closeModal('addTeamModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="block text-base font-semibold text-gray-700 mb-1">Team Name *</label>
+                    <input type="text" id="teamName" placeholder="e.g. Engineering Team"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-base font-semibold text-gray-700 mb-1">Description</label>
+                    <textarea id="teamDescription" rows="2"
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-emerald-500 outline-none resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-base font-semibold text-gray-700 mb-1">Color</label>
+                    <div class="flex gap-3" id="colorPicker">
+                        <button type="button" data-color="emerald" class="color-btn w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-offset-2 ring-emerald-500"></button>
+                        <button type="button" data-color="blue" class="color-btn w-8 h-8 rounded-full bg-blue-500"></button>
+                        <button type="button" data-color="purple" class="color-btn w-8 h-8 rounded-full bg-purple-500"></button>
+                        <button type="button" data-color="amber" class="color-btn w-8 h-8 rounded-full bg-amber-500"></button>
+                        <button type="button" data-color="red" class="color-btn w-8 h-8 rounded-full bg-red-500"></button>
+                    </div>
+                </div>
+                <div id="addTeamError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-base font-semibold text-red-700" id="addTeamErrorText"></p>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+                <button onclick="closeModal('addTeamModal')" class="px-4 py-2 border border-gray-300 rounded-lg font-semibold text-gray-700 text-base">Cancel</button>
+                <button onclick="createTeam()" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 text-base">Create Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD MEMBERS MODAL -->
+    <div id="addMembersModal" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-bold text-white">Add Members</h3>
+                    <p class="text-sm text-blue-100" id="addMembersTeamName"></p>
+                </div>
+                <button onclick="closeModal('addMembersModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 max-h-96 overflow-y-auto space-y-2" id="membersChecklist">
+                @foreach (var m in Model.Members)
+                {
+                    <label class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" value="@m.Id" class="member-checkbox rounded text-emerald-500 w-5 h-5">
+                        <img class="w-10 h-10 rounded-full object-cover"
+                             src="@(string.IsNullOrEmpty(m.ProfilePictureUrl) ? $"https://i.pravatar.cc/100?u={m.Id}" : m.ProfilePictureUrl)">
+                        <div class="flex-1">
+                            <p class="text-base font-bold text-gray-900">@m.FullName</p>
+                            <p class="text-sm text-gray-500">@m.Role</p>
+                        </div>
+                    </label>
+                }
+            </div>
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+                <button onclick="closeModal('addMembersModal')" class="px-4 py-2 border border-gray-300 rounded-lg font-semibold text-gray-700 text-base">Cancel</button>
+                <button onclick="submitAddMembers()" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 text-base">Add Selected</button>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        let selectedColor = 'emerald';
+        let draggedTaskId = null;
+        let currentTeamId = null;
+
+        function getToken() {
+            const el = document.querySelector('input[name="__RequestVerificationToken"]');
+            return el ? el.value : '';
+        }
+
+        function openModal(id) { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); } }
+        function closeModal(id) { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } }
+
+        function switchTab(tab) {
+            const teamsView   = document.getElementById('teamsView');
+            const membersView = document.getElementById('membersView');
+            const teamsBtn    = document.getElementById('teamsTabBtn');
+            const membersBtn  = document.getElementById('membersTabBtn');
+            if (tab === 'teams') {
+                teamsView.style.display = 'block';
+                membersView.style.display = 'none';
+                teamsBtn.className   = 'flex-1 py-3 bg-brand text-sidebar text-lg font-bold rounded-md shadow-sm';
+                membersBtn.className = 'flex-1 py-3 bg-white text-gray-700 text-lg font-bold rounded-md shadow-sm';
+            } else {
+                teamsView.style.display = 'none';
+                membersView.style.display = 'block';
+                teamsBtn.className   = 'flex-1 py-3 bg-white text-gray-700 text-lg font-bold rounded-md shadow-sm';
+                membersBtn.className = 'flex-1 py-3 bg-brand text-sidebar text-lg font-bold rounded-md shadow-sm';
+            }
+        }
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedColor = btn.dataset.color;
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-2','ring-offset-2'));
+                btn.classList.add('ring-2','ring-offset-2');
+                const ringClass = `ring-${selectedColor}-500`;
+                btn.classList.add(ringClass);
+            });
+        });
+
+        function openAddTeamModal() {
+            document.getElementById('teamName').value = '';
+            document.getElementById('teamDescription').value = '';
+            selectedColor = 'emerald';
+            document.getElementById('addTeamError').classList.add('hidden');
+            openModal('addTeamModal');
+        }
+
+        async function createTeam() {
+            const name = document.getElementById('teamName').value.trim();
+            const desc = document.getElementById('teamDescription').value.trim();
+            const errEl = document.getElementById('addTeamError');
+            const errTxt = document.getElementById('addTeamErrorText');
+
+            if (!name) { errTxt.innerText = 'Team name is required.'; errEl.classList.remove('hidden'); return; }
+
+            const fd = new FormData();
+            fd.append('name', name);
+            fd.append('description', desc);
+            fd.append('color', selectedColor);
+            fd.append('__RequestVerificationToken', getToken());
+
+            const res = await fetch('/Teams/CreateTeam', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { closeModal('addTeamModal'); showToast(r.message); setTimeout(() => location.reload(), 700); }
+            else { errTxt.innerText = r.message; errEl.classList.remove('hidden'); }
+        }
+
+        async function deleteTeam(id, name) {
+            if (!confirm(`Delete team "${name}"? Assignments will be unlinked.`)) return;
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('__RequestVerificationToken', getToken());
+            const res = await fetch('/Teams/DeleteTeam', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 700); }
+            else showToast(r.message, 'error');
+        }
+
+        function openAddMembersModal(teamId, teamName) {
+            currentTeamId = teamId;
+            document.getElementById('addMembersTeamName').innerText = teamName;
+            document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = false);
+            openModal('addMembersModal');
+        }
+
+        async function submitAddMembers() {
+            if (!currentTeamId) return;
+            const ids = [...document.querySelectorAll('.member-checkbox:checked')].map(cb => cb.value);
+            if (ids.length === 0) { showToast('Select at least one member.', 'error'); return; }
+
+            const fd = new FormData();
+            fd.append('teamId', currentTeamId);
+            ids.forEach(id => fd.append('userIds', id));
+            fd.append('__RequestVerificationToken', getToken());
+
+            const res = await fetch('/Teams/AddMembers', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { closeModal('addMembersModal'); showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+        }
+
+        async function removeMember(teamId, userId, name) {
+            if (!confirm(`Remove ${name} from this team?`)) return;
+            const fd = new FormData();
+            fd.append('teamId', teamId);
+            fd.append('userId', userId);
+            fd.append('__RequestVerificationToken', getToken());
+            const res = await fetch('/Teams/RemoveMember', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+        }
+
+        async function setLeader(teamId, userId) {
+            if (!confirm('Assign this member as team leader?')) return;
+            const fd = new FormData();
+            fd.append('teamId', teamId);
+            fd.append('userId', userId);
+            fd.append('__RequestVerificationToken', getToken());
+            const res = await fetch('/Teams/SetLeader', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+        }
+
+        async function removeLeader(teamId) {
+            if (!confirm('Remove the leader from this team?')) return;
+            const fd = new FormData();
+            fd.append('teamId', teamId);
+            fd.append('__RequestVerificationToken', getToken());
+            const res = await fetch('/Teams/RemoveLeader', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+        }
+
+        async function assignProject(projectId, selectEl) {
+            const value = selectEl.value;
+            const [type, id] = value ? value.split(':') : ['none', '00000000-0000-0000-0000-000000000000'];
+
+            const fd = new FormData();
+            fd.append('projectId', projectId);
+            fd.append('targetType', type);
+            fd.append('targetId', id);
+            fd.append('__RequestVerificationToken', getToken());
+
+            const res = await fetch('/Teams/AssignProject', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+        }
+
+        async function assignTask(taskId, selectEl) {
+            const value = selectEl.value;
+            const [type, id] = value ? value.split(':') : ['none', '00000000-0000-0000-0000-000000000000'];
+
+            const fd = new FormData();
+            fd.append('taskId', taskId);
+            fd.append('targetType', type);
+            fd.append('targetId', id);
+            fd.append('__RequestVerificationToken', getToken());
+
+            const res = await fetch('/Teams/AssignTask', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+        }
+
+        function dragStart(event, taskId) {
+            draggedTaskId = taskId;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', taskId);
+            event.target.classList.add('opacity-50','ring-2','ring-brand');
+        }
+        function dragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            event.currentTarget.classList.add('border-brand','bg-brand/5','shadow-lg');
+        }
+        function dragLeave(event) {
+            event.currentTarget.classList.remove('border-brand','bg-brand/5','shadow-lg');
+        }
+        async function dropOnTarget(event, type, id) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('border-brand','bg-brand/5','shadow-lg');
+            document.querySelectorAll('.cursor-grab').forEach(el => el.classList.remove('opacity-50','ring-2','ring-brand'));
+
+            if (!draggedTaskId) return;
+            const fd = new FormData();
+            fd.append('taskId', draggedTaskId);
+            fd.append('targetType', type);
+            fd.append('targetId', id);
+            fd.append('__RequestVerificationToken', getToken());
+
+            const res = await fetch('/Teams/AssignTask', { method: 'POST', body: fd });
+            const r = await res.json();
+            if (r.success) { showToast(r.message); setTimeout(() => location.reload(), 600); }
+            else showToast(r.message, 'error');
+
+            draggedTaskId = null;
+        }
+
+        document.addEventListener('dragend', function () {
+            document.querySelectorAll('.cursor-grab').forEach(el => el.classList.remove('opacity-50','ring-2','ring-brand'));
+            document.querySelectorAll('[id^="drop-"]').forEach(el => el.classList.remove('border-brand','bg-brand/5','shadow-lg'));
+        });
+
+        function showToast(message, type = 'success') {
+            const bg = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            const t = document.createElement('div');
+            t.className = `fixed top-6 right-6 z-[60] ${bg} text-white px-6 py-4 rounded-xl shadow-2xl font-semibold text-base transition-all`;
+            t.innerText = message;
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
+        }
+    </script>
+}

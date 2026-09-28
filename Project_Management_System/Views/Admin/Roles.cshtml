@@ -1,0 +1,172 @@
+﻿@model List<Project_Management_System.ViewModels.RoleInfoViewModel>
+@{
+    ViewData["Title"] = "Roles";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var totalUsers = (int)(ViewBag.TotalUsers ?? 0);
+    var orgName = ViewBag.OrgName as string;
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="px-3 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full uppercase tracking-wider">
+                    @orgName
+                </span>
+                <span class="px-3 py-1 text-xs font-black bg-gray-200 text-gray-700 rounded-full uppercase tracking-wider">
+                    System Roles
+                </span>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Roles &amp; Permissions
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">
+                Roles are pre-defined by the platform. Here's what each role can do in your organization.
+            </p>
+        </div>
+    </div>
+
+    <!-- Info banner -->
+    <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <div>
+            <p class="text-base font-bold text-blue-900 mb-1">System-Defined Roles</p>
+            <p class="text-sm text-blue-800 font-medium">
+                These roles ship with ARG PMS and define feature access. Assign roles from the <strong>Users</strong> page.
+            </p>
+        </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="mb-6 p-5 bg-white rounded-2xl shadow-xl border border-gray-100">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="text-xs font-black text-gray-500 uppercase tracking-wide">Total Users in Organization</p>
+                <p class="text-3xl font-black text-gray-900 mt-1">@totalUsers</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                @foreach (var role in Model)
+                {
+                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                        <span class="w-2 h-2 rounded-full bg-@role.Color-500"></span>
+                        <span class="text-sm font-semibold text-gray-700">@role.Name</span>
+                        <span class="text-sm font-black text-gray-900">@role.UserCount</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Roles Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
+
+        @foreach (var role in Model)
+        {
+            var bgGradient = role.Color switch
+            {
+                "red" => "from-red-500 to-rose-600",
+                "purple" => "from-purple-500 to-purple-600",
+                "emerald" => "from-emerald-500 to-teal-500",
+                "blue" => "from-blue-500 to-indigo-500",
+                _ => "from-gray-500 to-gray-600"
+            };
+
+            var borderColor = role.Color switch
+            {
+                "red" => "border-red-300",
+                "purple" => "border-purple-300",
+                "emerald" => "border-emerald-300",
+                "blue" => "border-blue-300",
+                _ => "border-gray-300"
+            };
+
+            var btnColor = role.Color switch
+            {
+                "red" => "bg-red-50 text-red-700 hover:bg-red-100",
+                "purple" => "bg-purple-50 text-purple-700 hover:bg-purple-100",
+                "emerald" => "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+                "blue" => "bg-blue-50 text-blue-700 hover:bg-blue-100",
+                _ => "bg-gray-50 text-gray-700 hover:bg-gray-100"
+            };
+
+            <div class="bg-white rounded-2xl shadow-xl border-2 @borderColor overflow-hidden">
+
+                <!-- Role Header -->
+                <div class="bg-gradient-to-r @bgGradient px-5 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                            @if (role.Icon == "shield")
+                            {
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            }
+                            else if (role.Icon == "chart")
+                            {
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            }
+                            else if (role.Icon == "briefcase")
+                            {
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            }
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-xl font-black text-white drop-shadow truncate">@role.Name</h3>
+                            <p class="text-sm text-white/90 font-semibold">
+                                @role.UserCount @(role.UserCount == 1 ? "user" : "users")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Body -->
+                <div class="p-5">
+                    <p class="text-sm text-gray-600 mb-4 leading-relaxed">@role.Description</p>
+
+                    <p class="text-xs font-black text-gray-500 uppercase tracking-wider mb-3">Permissions</p>
+                    <div class="space-y-2">
+                        @foreach (var permission in role.Permissions)
+                        {
+                            <div class="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                @permission
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <p class="text-xs text-gray-500 font-semibold">
+                            Manage from <a asp-controller="Admin" asp-action="Index" class="text-blue-600 hover:underline font-bold">Users page</a>
+                        </p>
+                        <span class="px-2.5 py-1 text-[10px] font-black bg-gray-100 text-gray-600 rounded-full uppercase tracking-wider">
+                            System Role
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>

@@ -1,0 +1,593 @@
+﻿@model List<Project_Management_System.ViewModels.OrgUserListItemViewModel>
+@{
+    ViewData["Title"] = "Team Management";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var stats = ViewBag.Stats as Project_Management_System.ViewModels.AdminStatsViewModel;
+    var orgName = ViewBag.OrgName as string;
+}
+
+<div class="bg-gray-100 min-h-screen">
+
+    <!-- ============================================= -->
+    <!-- PAGE HEADER                                    -->
+    <!-- ============================================= -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="px-3 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full uppercase tracking-wider">
+                    @orgName
+                </span>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Team Management
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">Create and manage your organization's team members.</p>
+        </div>
+        <button onclick="openAddUserModal()" class="px-6 py-3 bg-brand text-sidebar text-base font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-glow flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+            Add User
+        </button>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- KPI CARDS                                      -->
+    <!-- ============================================= -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-blue-100 uppercase tracking-wide">Total Users</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.TotalUsers</h3>
+            <p class="text-xs text-blue-100 font-medium mt-1">In your organization</p>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-purple-100 uppercase tracking-wide">Executive Managers</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.ExecutiveManagers</h3>
+            <p class="text-xs text-purple-100 font-medium mt-1">Overseeing teams</p>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-emerald-100 uppercase tracking-wide">Project Managers</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.ProjectManagers</h3>
+            <p class="text-xs text-emerald-100 font-medium mt-1">Managing projects</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-amber-100 uppercase tracking-wide">Members</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.Members</h3>
+            <p class="text-xs text-amber-100 font-medium mt-1">Working on tasks</p>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- USERS TABLE                                    -->
+    <!-- ============================================= -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+
+        <!-- Search + Filter -->
+        <div class="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center gap-4">
+            <div class="relative flex-1">
+                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="userSearch" onkeyup="filterUsers()" placeholder="Search users by name or email..."
+                       class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-base rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand/60">
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="filterByRole('all', this)" class="filter-btn px-4 py-2.5 bg-brand text-sidebar text-sm font-bold rounded-lg">All</button>
+                <button onclick="filterByRole('ExecutiveManager', this)" class="filter-btn px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Executives</button>
+                <button onclick="filterByRole('ProjectManager', this)" class="filter-btn px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">PMs</button>
+                <button onclick="filterByRole('Member', this)" class="filter-btn px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Members</button>
+                <button onclick="filterByRole('SystemAdmin', this)" class="filter-btn px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">Admins</button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        @if (Model.Count == 0)
+        {
+            <div class="p-16 text-center">
+                <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-gray-100 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">No users yet</h3>
+                <p class="text-gray-500 mb-6">Start building your team by adding the first member.</p>
+                <button onclick="openAddUserModal()" class="px-6 py-3 bg-brand text-sidebar font-bold rounded-lg hover:bg-yellow-400">
+                    Add First User
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wide">
+                            <th class="text-left py-4 px-5 font-bold">User</th>
+                            <th class="text-left py-4 px-5 font-bold">Role</th>
+                            <th class="text-left py-4 px-5 font-bold">Status</th>
+                            <th class="text-left py-4 px-5 font-bold">Last Login</th>
+                            <th class="text-right py-4 px-5 font-bold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="divide-y divide-gray-100">
+                        @foreach (var user in Model)
+                        {
+                            var roleBadge = user.Role switch
+                            {
+                                UserRole.SystemAdmin => new { Class = "bg-red-100 text-red-700", Label = "SYSTEM ADMIN" },
+                                UserRole.ExecutiveManager => new { Class = "bg-purple-100 text-purple-700", Label = "EXECUTIVE MGR" },
+                                UserRole.ProjectManager => new { Class = "bg-emerald-100 text-emerald-700", Label = "PROJECT MGR" },
+                                UserRole.Member => new { Class = "bg-blue-100 text-blue-700", Label = "MEMBER" },
+                                _ => new { Class = "bg-gray-100 text-gray-700", Label = user.Role.ToString().ToUpper() }
+                            };
+
+                            var statusBadge = user.Status == UserStatus.Active
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-gray-200 text-gray-600";
+
+                            var lastLogin = user.LastLoginAt.HasValue
+                            ? GetRelativeTime(user.LastLoginAt.Value)
+                            : "Never";
+
+                            var avatarUrl = string.IsNullOrEmpty(user.ProfilePictureUrl)
+                            ? $"https://i.pravatar.cc/100?img={Math.Abs(user.Id.GetHashCode() % 70)}"
+                            : user.ProfilePictureUrl;
+
+                            <tr class="user-row hover:bg-gray-50 transition-colors"
+                                data-id="@user.Id"
+                                data-name="@user.FullName"
+                                data-email="@user.Email"
+                                data-phone="@user.Phone"
+                                data-role="@user.Role.ToString()"
+                                data-status="@user.Status.ToString()">
+                                <td class="py-4 px-5">
+                                    <div class="flex items-center gap-3">
+                                        <img class="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover"
+                                             src="@avatarUrl"
+                                             onerror="this.onerror=null; this.src='https://i.pravatar.cc/100?img=1'" alt="">
+                                        <div>
+                                            <p class="text-base font-bold text-gray-900 row-name">@user.FullName</p>
+                                            <p class="text-sm text-gray-500 row-email">@user.Email</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-5">
+                                    <span class="role-badge px-3 py-1.5 text-xs font-black @roleBadge.Class rounded-full">@roleBadge.Label</span>
+                                </td>
+                                <td class="py-4 px-5">
+                                    <span class="status-badge px-3 py-1.5 text-xs font-black @statusBadge rounded-full">@user.Status.ToString().ToUpper()</span>
+                                </td>
+                                <td class="py-4 px-5 text-sm text-gray-600 font-medium">@lastLogin</td>
+                                <td class="py-4 px-5 text-right whitespace-nowrap">
+                                    <button onclick="openEditModal('@user.Id')" class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors" title="Edit">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </button>
+                                    <button onclick="toggleStatus('@user.Id', this)" class="text-amber-600 hover:bg-amber-50 p-2 rounded-lg ml-1 transition-colors" title="Toggle status">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                    </button>
+                                    <button onclick="openDeleteModal('@user.Id', '@user.FullName', this)" class="text-red-600 hover:bg-red-50 p-2 rounded-lg ml-1 transition-colors" title="Delete">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetRelativeTime(DateTime date)
+    {
+        var diff = DateTime.UtcNow - date;
+        if (diff.TotalMinutes < 1) return "Just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return date.ToString("MMM dd, yyyy");
+    }
+}
+
+<!-- ============================================= -->
+<!-- ADD USER MODAL                                 -->
+<!-- ============================================= -->
+<div id="addUserModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Add New User</h3>
+                    <p class="text-sm text-blue-100">Create a team member in your organization</p>
+                </div>
+            </div>
+            <button onclick="closeModal('addUserModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form id="addUserForm" class="p-6 space-y-5 overflow-y-auto" onsubmit="event.preventDefault(); createUser();">
+            @Html.AntiForgeryToken()
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Full Name *</label>
+                <input type="text" id="addName" required placeholder="e.g. John Doe" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Email *</label>
+                <input type="email" id="addEmail" required placeholder="john@yourcompany.com" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Phone (optional)</label>
+                <input type="tel" id="addPhone" placeholder="+1 555 0100" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Role *</label>
+                <select id="addRole" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="Member" selected>Member — works on assigned tasks</option>
+                    <option value="ProjectManager">Project Manager — manages projects & tasks</option>
+                    <option value="ExecutiveManager">Executive Manager — oversees PMs & teams</option>
+                    <option value="SystemAdmin">System Admin — full organization control</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Password *</label>
+                <input type="password" id="addPassword" required placeholder="Minimum 8 characters" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Confirm Password *</label>
+                <input type="password" id="addPasswordConfirm" required placeholder="Re-enter password" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div id="addUserError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm font-semibold text-red-700" id="addUserErrorText"></p>
+            </div>
+        </form>
+
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button type="button" onclick="closeModal('addUserModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+            <button type="button" id="btnCreateUser" onclick="createUser()" class="px-6 py-2.5 bg-brand text-sidebar rounded-lg font-bold hover:bg-yellow-400 flex items-center gap-2 disabled:opacity-50">
+                <span id="btnCreateUserText">Create User</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- EDIT USER MODAL                                -->
+<!-- ============================================= -->
+<div id="editUserModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white">Edit User</h3>
+            </div>
+            <button onclick="closeModal('editUserModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form id="editUserForm" class="p-6 space-y-5 overflow-y-auto" onsubmit="event.preventDefault(); updateUser();">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="editUserId" />
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Full Name *</label>
+                <input type="text" id="editName" required class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Email *</label>
+                <input type="email" id="editEmail" required class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Phone</label>
+                <input type="tel" id="editPhone" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Role *</label>
+                <select id="editRole" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    <option value="Member">Member</option>
+                    <option value="ProjectManager">Project Manager</option>
+                    <option value="ExecutiveManager">Executive Manager</option>
+                    <option value="SystemAdmin">System Admin</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Status</label>
+                <select id="editStatus" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Suspended">Suspended</option>
+                </select>
+            </div>
+
+            <div id="editUserError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm font-semibold text-red-700" id="editUserErrorText"></p>
+            </div>
+        </form>
+
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button type="button" onclick="closeModal('editUserModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+            <button type="button" id="btnSaveUser" onclick="updateUser()" class="px-6 py-2.5 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- DELETE USER MODAL                              -->
+<!-- ============================================= -->
+<div id="deleteUserModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-rose-600 px-6 py-5 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white">Delete User</h3>
+            <button onclick="closeModal('deleteUserModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-base text-gray-700 mb-4">
+                Delete <span class="font-bold text-gray-900" id="deleteUserName">this user</span>? This action cannot be undone.
+            </p>
+            <div class="flex justify-end gap-3 pt-3 border-t">
+                <button onclick="closeModal('deleteUserModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+                <button id="btnDeleteUser" onclick="confirmDelete()" class="px-6 py-2.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let editingUserId = null;
+        let deletingUserId = null;
+
+        function openModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+        function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+        function getToken() {
+            return document.querySelector('#addUserForm input[name="__RequestVerificationToken"]').value;
+        }
+
+        // ============ CREATE USER ============
+        function openAddUserModal() {
+            ['addName', 'addEmail', 'addPhone', 'addPassword', 'addPasswordConfirm'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('addRole').value = 'Member';
+            document.getElementById('addUserError').classList.add('hidden');
+            openModal('addUserModal');
+        }
+
+        async function createUser() {
+            const fullName = document.getElementById('addName').value.trim();
+            const email = document.getElementById('addEmail').value.trim();
+            const phone = document.getElementById('addPhone').value.trim();
+            const role = document.getElementById('addRole').value;
+            const password = document.getElementById('addPassword').value;
+            const passwordConfirm = document.getElementById('addPasswordConfirm').value;
+
+            const errEl = document.getElementById('addUserError');
+            const errText = document.getElementById('addUserErrorText');
+
+            if (!fullName || !email || !password) {
+                errText.innerText = 'Please fill in all required fields.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            if (password !== passwordConfirm) {
+                errText.innerText = 'Passwords do not match.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            if (password.length < 8) {
+                errText.innerText = 'Password must be at least 8 characters.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            errEl.classList.add('hidden');
+
+            const btn = document.getElementById('btnCreateUser');
+            const btnText = document.getElementById('btnCreateUserText');
+            btn.disabled = true;
+            btnText.innerText = 'Creating...';
+
+            try {
+                const fd = new FormData();
+                fd.append('FullName', fullName);
+                fd.append('Email', email);
+                fd.append('Phone', phone);
+                fd.append('Role', role);
+                fd.append('Password', password);
+                fd.append('PasswordConfirm', passwordConfirm);
+                fd.append('__RequestVerificationToken', getToken());
+
+                const response = await fetch('/Admin/CreateUser', { method: 'POST', body: fd });
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('addUserModal');
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    errText.innerText = result.message || 'Failed to create user.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errText.innerText = 'Network error. Please try again.';
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = 'Create User';
+            }
+        }
+
+        // ============ EDIT USER ============
+        async function openEditModal(id) {
+            try {
+                const response = await fetch(`/Admin/GetUser/${id}`);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                editingUserId = data.id;
+                document.getElementById('editUserId').value = data.id;
+                document.getElementById('editName').value = data.fullName;
+                document.getElementById('editEmail').value = data.email;
+                document.getElementById('editPhone').value = data.phone || '';
+                document.getElementById('editRole').value = data.role;
+                document.getElementById('editStatus').value = data.status;
+                document.getElementById('editUserError').classList.add('hidden');
+
+                openModal('editUserModal');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function updateUser() {
+            const id = document.getElementById('editUserId').value;
+            const fullName = document.getElementById('editName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const role = document.getElementById('editRole').value;
+            const status = document.getElementById('editStatus').value;
+
+            const errEl = document.getElementById('editUserError');
+            const errText = document.getElementById('editUserErrorText');
+
+            if (!fullName || !email) {
+                errText.innerText = 'Please fill in all required fields.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            errEl.classList.add('hidden');
+
+            try {
+                const fd = new FormData();
+                fd.append('Id', id);
+                fd.append('FullName', fullName);
+                fd.append('Email', email);
+                fd.append('Phone', phone);
+                fd.append('Role', role);
+                fd.append('Status', status);
+                fd.append('__RequestVerificationToken', getToken());
+
+                const response = await fetch('/Admin/UpdateUser', { method: 'POST', body: fd });
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('editUserModal');
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    errText.innerText = result.message;
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errText.innerText = 'Network error.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        // ============ DELETE USER ============
+        function openDeleteModal(id, name, btn) {
+            deletingUserId = id;
+            document.getElementById('deleteUserName').innerText = name;
+            openModal('deleteUserModal');
+        }
+
+        async function confirmDelete() {
+            if (!deletingUserId) return;
+
+            try {
+                const fd = new FormData();
+                fd.append('id', deletingUserId);
+                fd.append('__RequestVerificationToken', getToken());
+
+                const response = await fetch('/Admin/DeleteUser', { method: 'POST', body: fd });
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('deleteUserModal');
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (err) {
+                showToast('Network error.', 'error');
+            }
+        }
+
+        // ============ TOGGLE STATUS ============
+        async function toggleStatus(id, btn) {
+            if (!confirm('Toggle this user\'s status?')) return;
+
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('__RequestVerificationToken', getToken());
+
+            const response = await fetch('/Admin/ToggleStatus', { method: 'POST', body: fd });
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(`Status changed to ${result.newStatus}`, 'success');
+                setTimeout(() => window.location.reload(), 700);
+            } else {
+                showToast(result.message, 'error');
+            }
+        }
+
+        // ============ SEARCH & FILTER ============
+        function filterUsers() {
+            const q = document.getElementById('userSearch').value.toLowerCase();
+            document.querySelectorAll('.user-row').forEach(row => {
+                const text = (row.dataset.name + ' ' + row.dataset.email).toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        function filterByRole(role, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.className = 'filter-btn px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50';
+            });
+            btn.className = 'filter-btn px-4 py-2.5 bg-brand text-sidebar text-sm font-bold rounded-lg';
+
+            document.querySelectorAll('.user-row').forEach(row => {
+                row.style.display = (role === 'all' || row.dataset.role === role) ? '' : 'none';
+            });
+        }
+
+        // ============ TOAST ============
+        function showToast(message, type = 'success') {
+            const bg = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            const toast = document.createElement('div');
+            toast.className = `fixed top-6 right-6 z-[60] ${bg} text-white px-6 py-4 rounded-xl shadow-2xl font-semibold text-base transition-all duration-300`;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+}

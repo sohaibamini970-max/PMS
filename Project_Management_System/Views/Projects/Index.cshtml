@@ -1,0 +1,1006 @@
+﻿@model List<Project_Management_System.ViewModels.ProjectListItemViewModel>
+@{
+    ViewData["Title"] = "Projects";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var stats = ViewBag.Stats as Project_Management_System.ViewModels.ProjectStatsViewModel;
+    var pms = ViewBag.ProjectManagers as List<Project_Management_System.ViewModels.ProjectManagerOptionViewModel> ?? new();
+    var canCreate = (bool)(ViewBag.CanCreate ?? false);
+    var currentRole = ViewBag.CurrentRole as string ?? "";
+    var currentUserId = ViewBag.CurrentUserId as Guid?;   // ← add this
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    <!-- ============================================= -->
+    <!-- PAGE HEADER                                    -->
+    <!-- ============================================= -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Projects
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">
+                @(currentRole == "ProjectManager" ? "Your assigned projects." : "Manage and track all projects in your organization.")
+            </p>
+        </div>
+        <div class="flex gap-3 w-full md:w-auto">
+            <div class="relative w-full md:w-64">
+                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="projectSearch" onkeyup="filterProjects()" placeholder="Search projects..." class="w-full bg-white border border-gray-300 text-gray-900 text-base rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/60">
+            </div>
+
+            @if (canCreate)
+            {
+                <!-- ✅ NEW: Assign Projects button -->
+                <a asp-controller="Projects" asp-action="Assign"
+                   class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 text-base font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Assign Projects
+                </a>
+
+                <!-- New Project button -->
+                <button onclick="openAddModal()" class="px-6 py-2.5 bg-brand text-sidebar text-base font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-glow flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    New Project
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- KPI CARDS                                      -->
+    <!-- ============================================= -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-blue-100 uppercase tracking-wide">Total</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.Total</h3>
+            <p class="text-xs text-blue-100 font-medium mt-1">Projects</p>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-emerald-100 uppercase tracking-wide">Active</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.Active</h3>
+            <p class="text-xs text-emerald-100 font-medium mt-1">Running</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-amber-100 uppercase tracking-wide">At Risk</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.AtRisk</h3>
+            <p class="text-xs text-amber-100 font-medium mt-1">Needs attention</p>
+        </div>
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-red-100 uppercase tracking-wide">Overdue</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.Overdue</h3>
+            <p class="text-xs text-red-100 font-medium mt-1">Past deadline</p>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-purple-100 uppercase tracking-wide">Completed</p>
+            <h3 class="text-4xl font-black mt-2">@stats?.Completed</h3>
+            <p class="text-xs text-purple-100 font-medium mt-1">Done</p>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- FILTER TABS                                    -->
+    <!-- ============================================= -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <button onclick="filterByStatus('all', this)" class="filter-btn px-5 py-2.5 bg-brand text-sidebar text-sm font-bold rounded-full shadow-sm">All Projects</button>
+        <button onclick="filterByStatus('Active', this)" class="filter-btn px-5 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-50 shadow-sm border border-gray-200">Active</button>
+        <button onclick="filterByStatus('AtRisk', this)" class="filter-btn px-5 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-50 shadow-sm border border-gray-200">At Risk</button>
+        <button onclick="filterByStatus('OnHold', this)" class="filter-btn px-5 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-50 shadow-sm border border-gray-200">On Hold</button>
+        <button onclick="filterByStatus('Completed', this)" class="filter-btn px-5 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-50 shadow-sm border border-gray-200">Completed</button>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- PROJECTS GRID                                  -->
+    <!-- ============================================= -->
+    @if (Model.Count == 0)
+    {
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-16 text-center">
+            <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-gray-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No projects yet</h3>
+            <p class="text-gray-500 mb-6">@(canCreate ? "Create your first project to get started." : "You haven't been assigned any projects yet.")</p>
+            @if (canCreate)
+            {
+                <button onclick="openAddModal()" class="px-6 py-3 bg-brand text-sidebar font-bold rounded-lg hover:bg-yellow-400">
+                    Create First Project
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var p in Model)
+            {
+                // Border color by status
+                var borderClass = p.Status switch
+                {
+                    ProjectStatus.Active => "border-emerald-500",
+                    ProjectStatus.AtRisk => "border-amber-500",
+                    ProjectStatus.Completed => "border-blue-500",
+                    ProjectStatus.OnHold => "border-gray-400",
+                    ProjectStatus.Planning => "border-purple-500",
+                    _ => "border-gray-300"
+                };
+
+                // Progress bar color
+                var progressClass = p.Status switch
+                {
+                    ProjectStatus.Active => "bg-emerald-500",
+                    ProjectStatus.AtRisk => "bg-amber-500",
+                    ProjectStatus.Completed => "bg-blue-500",
+                    ProjectStatus.Planning => "bg-purple-500",
+                    _ => "bg-gray-400"
+                };
+
+                // Status badge
+                var statusBadge = p.Status switch
+                {
+                    ProjectStatus.Active => "bg-emerald-100 text-emerald-700",
+                    ProjectStatus.AtRisk => "bg-amber-100 text-amber-700",
+                    ProjectStatus.Completed => "bg-blue-100 text-blue-700",
+                    ProjectStatus.OnHold => "bg-gray-200 text-gray-700",
+                    ProjectStatus.Planning => "bg-purple-100 text-purple-700",
+                    _ => "bg-gray-100 text-gray-600"
+                };
+
+                // Priority badge
+                var priorityBadge = p.Priority switch
+                {
+                    ProjectPriority.Critical => "bg-red-100 text-red-700",
+                    ProjectPriority.High => "bg-orange-100 text-orange-700",
+                    ProjectPriority.Medium => "bg-amber-100 text-amber-700",
+                    _ => "bg-gray-100 text-gray-600"
+                };
+
+                // Overdue check
+                var isOverdue = p.Deadline.HasValue
+                && p.Deadline.Value.Date < DateTime.UtcNow.Date
+                && p.Status != ProjectStatus.Completed
+                && p.Status != ProjectStatus.Archived;
+
+                var pmInitial = string.IsNullOrEmpty(p.ProjectManagerName) ? "?"
+                : p.ProjectManagerName.Substring(0, 1).ToUpper();
+
+                <div class="project-card bg-white rounded-xl shadow-lg border-t-4 @borderClass overflow-hidden flex flex-col hover:shadow-xl transition-shadow"
+                     data-name="@p.Name"
+                     data-client="@p.Client"
+                     data-status="@p.Status"
+                     data-priority="@p.Priority">
+
+                    <div class="p-6 flex-1">
+                        <!-- Status + Priority row -->
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1 text-xs font-black @statusBadge rounded-full uppercase tracking-wide">@p.Status</span>
+                                <span class="px-3 py-1 text-xs font-black @priorityBadge rounded-full uppercase tracking-wide">@p.Priority</span>
+                            </div>
+                            @if (canCreate)
+                            {
+                                <button onclick="openDeleteModal('@p.Id', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(p.Name))')"
+                                        class="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors" title="Delete">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            }
+@{
+    var isExecOrAdmin = currentRole == "ExecutiveManager" || currentRole == "SystemAdmin";
+    var isOwnerPm = currentRole == "ProjectManager"
+                    && p.ProjectManagerId.HasValue
+                    && p.ProjectManagerId.Value == currentUserId;
+    var canChangeStatus = isExecOrAdmin || isOwnerPm;
+}
+@if (canChangeStatus)
+{
+    <div class="relative">
+        <button onclick="toggleStatusMenu(event, 'statusMenu-@p.Id')"
+                class="text-gray-400 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+        </button>
+
+        <div id="statusMenu-@p.Id"
+             class="hidden absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-2xl border border-gray-100 z-30 py-1">
+            <div class="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Change Status</div>
+
+            @* ── Exec / Admin: intermediate statuses ── *@
+            @if (isExecOrAdmin)
+            {
+                if (p.Status != ProjectStatus.Planning)
+                {
+                    <a href="#" onclick="changeProjectStatus(event, '@p.Id', 'Planning')"
+                       class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span> Planning
+                    </a>
+                }
+                if (p.Status != ProjectStatus.Active)
+                {
+                    <a href="#" onclick="changeProjectStatus(event, '@p.Id', 'Active')"
+                       class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active
+                    </a>
+                }
+                if (p.Status != ProjectStatus.AtRisk)
+                {
+                    <a href="#" onclick="changeProjectStatus(event, '@p.Id', 'AtRisk')"
+                       class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-amber-50">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> At Risk
+                    </a>
+                }
+                if (p.Status != ProjectStatus.OnHold)
+                {
+                    <a href="#" onclick="changeProjectStatus(event, '@p.Id', 'OnHold')"
+                       class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <span class="w-2 h-2 rounded-full bg-gray-400"></span> On Hold
+                    </a>
+                }
+            }
+
+            @* ── Mark Done: PM (owner) or Exec/Admin, only when all tasks completed ── *@
+            @if ((isOwnerPm || isExecOrAdmin)
+                 && p.Status != ProjectStatus.Done
+                 && p.Status != ProjectStatus.Completed)
+            {
+                if (p.AllTasksCompleted)
+                {
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <a href="#" onclick="changeProjectStatus(event, '@p.Id', 'Done')"
+                       class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Mark Project Done
+                    </a>
+                }
+                else
+                {
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <div class="px-4 py-2 text-xs text-gray-400 italic"
+                         title="All tasks must be Completed first">
+                        🔒 Mark Done — @p.CompletedTasks/@p.TotalTasks tasks completed
+                    </div>
+                }
+            }
+
+            @* ── Confirm Completed: Exec/Admin, only when status == Done ── *@
+            @if (isExecOrAdmin && p.Status == ProjectStatus.Done)
+            {
+                <div class="border-t border-gray-100 my-1"></div>
+                <a href="#" onclick="changeProjectStatus(event, '@p.Id', 'Completed')"
+                   class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-50">
+                    <span class="w-2 h-2 rounded-full bg-purple-500"></span> Confirm Completion
+                </a>
+            }
+        </div>
+    </div>
+}
+                        </div>
+                          
+
+                        <!-- Title -->
+                        <h3 class="text-xl font-bold text-gray-900 mb-1">@p.Name</h3>
+                        <p class="text-sm text-gray-500 mb-3 font-medium">@(p.Client ?? "—")</p>
+
+                        <!-- Domain chip -->
+                        @if (!string.IsNullOrEmpty(p.Domain))
+                        {
+                            <div class="mb-3">
+                                <span class="inline-block px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 rounded-full">
+                                    🏷️ @p.Domain
+                                </span>
+                            </div>
+                        }
+
+                        <!-- Description -->
+                        <p class="text-sm text-gray-600 mb-5 line-clamp-2 leading-relaxed">@(p.Description ?? "No description provided.")</p>
+
+                        <!-- Progress -->
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1.5">
+                                <span class="text-gray-500 font-medium">Progress</span>
+                                <span class="text-gray-900 font-bold">@p.Progress%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="@progressClass h-full rounded-full" style="width: @p.Progress%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Dates row -->
+                        <div class="flex items-center justify-between text-xs mb-4">
+                            <span class="text-gray-500 font-medium">
+                                📅 @(p.StartDate?.ToString("MMM dd, yyyy") ?? "No start")
+                            </span>
+                            <span class="@(isOverdue ? "text-red-600 font-bold" : "text-gray-500 font-medium")">
+                                @(isOverdue ? "⚠ Overdue" : "→") @(p.Deadline?.ToString("MMM dd, yyyy") ?? "No deadline")
+                            </span>
+                        </div>
+
+                        <!-- Manager -->
+                        <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
+                            @if (!string.IsNullOrEmpty(p.ProjectManagerName))
+                            {
+                                <img class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover"
+                                     src="@(string.IsNullOrEmpty(p.ProjectManagerPicture) ? $"https://i.pravatar.cc/100?u={p.ProjectManagerId}" : p.ProjectManagerPicture)"
+                                     alt="">
+                                <div class="min-w-0">
+                                    <p class="text-xs text-gray-500 font-medium">Project Manager</p>
+                                    <p class="text-sm font-bold text-gray-900 truncate">@p.ProjectManagerName</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs font-bold">?</div>
+                                <div>
+                                    <p class="text-xs text-gray-400 font-medium">Unassigned</p>
+                                    <p class="text-sm font-semibold text-gray-500">No manager</p>
+                                </div>
+                            }
+
+                            @if (p.Budget.HasValue)
+                            {
+                                <span class="ml-auto px-2.5 py-1 text-xs font-bold bg-emerald-50 text-emerald-700 rounded-full">
+                                    $@p.Budget.Value.ToString("N0")
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex gap-2">
+                        <button onclick="openViewModal('@p.Id')"
+                                class="flex-1 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                            View Details
+                        </button>
+                        @if(canCreate){
+                        <button onclick="openEditModal('@p.Id')"
+                                class="px-3 py-2.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors" title="Edit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- ============================================= -->
+<!-- ADD PROJECT MODAL                              -->
+<!-- ============================================= -->
+@if (canCreate)
+{
+    <div id="addProjectModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Create New Project</h3>
+                        <p class="text-sm text-blue-100">Fill in the details and assign to a Project Manager</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('addProjectModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form id="addProjectForm" class="p-6 space-y-5 overflow-y-auto" onsubmit="event.preventDefault(); createProject();">
+                @Html.AntiForgeryToken()
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Project Name *</label>
+                    <input type="text" id="addName" required placeholder="e.g. Office Complex Tower A" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Client</label>
+                        <input type="text" id="addClient" placeholder="e.g. Acme Corp" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Domain</label>
+                        <select id="addDomain" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">Select domain...</option>
+                            <option value="Construction">Construction</option>
+                            <option value="Infrastructure">Infrastructure</option>
+                            <option value="IT & Software">IT &amp; Software</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Retail">Retail</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="Logistics">Logistics</option>
+                            <option value="Education">Education</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Priority *</label>
+                        <select id="addPriority" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Status *</label>
+                        <select id="addStatus" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="Planning" selected>Planning</option>
+                            <option value="Active">Active</option>
+                            <option value="AtRisk">At Risk</option>
+                            <option value="OnHold">On Hold</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Start Date</label>
+                        <input type="date" id="addStartDate" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Deadline</label>
+                        <input type="date" id="addDeadline" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Budget ($)</label>
+                        <input type="number" id="addBudget" min="0" step="1000" placeholder="e.g. 3000000" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Project Manager *
+                        <span class="text-xs font-medium text-gray-400">(Optional — assign later)</span>
+                        </label>
+                        <select id="addPM" required class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+
+                            <option value="">Select PM...</option>
+                            @foreach (var pm in pms)
+                            {
+                                <option value="@pm.Id">@pm.FullName (@pm.Email)</option>
+                            }
+                        </select>
+
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Description</label>
+                    <textarea id="addDescription" rows="3" placeholder="Brief description of the project..." class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
+                </div>
+
+                <div id="addProjectError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm font-semibold text-red-700" id="addProjectErrorText"></p>
+                </div>
+            </form>
+
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+                <button type="button" onclick="closeModal('addProjectModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+                <button type="button" id="btnCreateProject" onclick="createProject()" class="px-6 py-2.5 bg-brand text-sidebar rounded-lg font-bold hover:bg-yellow-400 flex items-center gap-2">
+                    <span id="btnCreateProjectText">Create Project</span>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ============================================= -->
+<!-- EDIT PROJECT MODAL                             -->
+<!-- ============================================= -->
+<div id="editProjectModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white">Edit Project</h3>
+            </div>
+            <button onclick="closeModal('editProjectModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form id="editProjectForm" class="p-6 space-y-5 overflow-y-auto" onsubmit="event.preventDefault(); updateProject();">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="editId" />
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Project Name *</label>
+                <input type="text" id="editName" required class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Client</label>
+                    <input type="text" id="editClient" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Domain</label>
+                    <input type="text" id="editDomain" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Priority</label>
+                    <select id="editPriority" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Status</label>
+                    <select id="editStatus" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="Planning">Planning</option>
+                        <option value="Active">Active</option>
+                        <option value="AtRisk">At Risk</option>
+                        <option value="OnHold">On Hold</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Archived">Archived</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Start Date</label>
+                    <input type="date" id="editStartDate" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Deadline</label>
+                    <input type="date" id="editDeadline" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Budget ($)</label>
+                    <input type="number" id="editBudget" min="0" step="1000" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+            </div>
+
+            @if (canCreate)
+            {
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Project Manager</label>
+                    <select id="editPM" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="">Unassigned</option>
+                        @foreach (var pm in pms)
+                        {
+                            <option value="@pm.Id">@pm.FullName (@pm.Email)</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5">Description</label>
+                <textarea id="editDescription" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500 outline-none resize-none"></textarea>
+            </div>
+
+            <div id="editProjectError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm font-semibold text-red-700" id="editProjectErrorText"></p>
+            </div>
+        </form>
+
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button type="button" onclick="closeModal('editProjectModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+            <button type="button" onclick="updateProject()" class="px-6 py-2.5 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- VIEW PROJECT MODAL                             -->
+<!-- ============================================= -->
+<div id="viewProjectModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
+
+        <div class="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-5 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white" id="viewTitle">Project Details</h3>
+            <button onclick="closeModal('viewProjectModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4 overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Status</span>
+                <span id="viewStatus" class="px-3 py-1 text-sm font-bold rounded-full">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Priority</span>
+                <span id="viewPriority" class="px-3 py-1 text-sm font-bold rounded-full">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Client</span>
+                <span id="viewClient" class="text-base font-bold text-gray-900">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Domain</span>
+                <span id="viewDomain" class="text-base font-bold text-gray-900">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Timeline</span>
+                <span id="viewTimeline" class="text-sm font-bold text-gray-900">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Budget</span>
+                <span id="viewBudget" class="text-base font-bold text-gray-900">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Progress</span>
+                <div class="flex items-center gap-3">
+                    <div class="w-32 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div id="viewProgressBar" class="bg-emerald-500 h-full rounded-full" style="width: 0%;"></div>
+                    </div>
+                    <span id="viewProgressText" class="text-base font-bold text-gray-900">0%</span>
+                </div>
+            </div>
+            <div class="pb-3 border-b border-gray-100">
+                <p class="text-sm font-semibold text-gray-500 mb-2">Project Manager</p>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <img id="viewPMAvatar" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="" alt="">
+                    <div>
+                        <p id="viewPMName" class="text-sm font-bold text-gray-900">—</p>
+                        <p id="viewPMEmail" class="text-xs text-gray-500">—</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-gray-500 mb-2">Description</p>
+                <p id="viewDescription" class="text-sm text-gray-700 leading-relaxed">—</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button onclick="closeModal('viewProjectModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- DELETE PROJECT MODAL                          -->
+<!-- ============================================= -->
+<div id="deleteProjectModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-rose-600 px-6 py-5 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white">Delete Project</h3>
+            <button onclick="closeModal('deleteProjectModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-base text-gray-700 mb-4">
+                Delete <span class="font-bold text-gray-900" id="deleteProjectName">this project</span>?
+                This action cannot be undone.
+            </p>
+            <div class="flex justify-end gap-3 pt-3 border-t">
+                <button onclick="closeModal('deleteProjectModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+                <button onclick="confirmDelete()" class="px-6 py-2.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">Delete Project</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let deletingId = null;
+
+        function openModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+        function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+        function getToken() {
+            const el = document.querySelector('input[name="__RequestVerificationToken"]');
+            return el ? el.value : '';
+        }
+
+        // ============ CREATE PROJECT ============
+        function openAddModal() {
+            ['addName','addClient','addDomain','addDescription','addStartDate','addDeadline','addBudget','addPM'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('addPriority').value = 'Medium';
+            document.getElementById('addStatus').value = 'Planning';
+            document.getElementById('addProjectError').classList.add('hidden');
+            openModal('addProjectModal');
+        }
+
+        async function createProject() {
+            const name = document.getElementById('addName').value.trim();
+            const client = document.getElementById('addClient').value.trim();
+            const domain = document.getElementById('addDomain').value;
+            const priority = document.getElementById('addPriority').value;
+            const status = document.getElementById('addStatus').value;
+            const startDate = document.getElementById('addStartDate').value;
+            const deadline = document.getElementById('addDeadline').value;
+            const budget = document.getElementById('addBudget').value;
+            const pmId = document.getElementById('addPM').value;
+            const description = document.getElementById('addDescription').value.trim();
+
+            const errEl = document.getElementById('addProjectError');
+            const errText = document.getElementById('addProjectErrorText');
+
+            if (!name) { errText.innerText = 'Project name is required.'; errEl.classList.remove('hidden'); return; }
+
+            // if (!pmId) { errText.innerText = 'Please select a Project Manager.'; errEl.classList.remove('hidden'); return; }
+            // errEl.classList.add('hidden');
+
+            const btn = document.getElementById('btnCreateProject');
+            const btnText = document.getElementById('btnCreateProjectText');
+            btn.disabled = true;
+            btnText.innerText = 'Creating...';
+
+            try {
+                const fd = new FormData();
+                fd.append('Name', name);
+                fd.append('Client', client);
+                fd.append('Domain', domain);
+                fd.append('Priority', priority);
+                if (startDate) fd.append('StartDate', startDate);
+                if (deadline) fd.append('Deadline', deadline);
+                if (budget) fd.append('Budget', budget);
+                fd.append('ProjectManagerId', pmId);
+                fd.append('Description', description);
+                fd.append('__RequestVerificationToken', getToken());
+
+                const res = await fetch('/Projects/CreateProject', { method: 'POST', body: fd });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeModal('addProjectModal');
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    errText.innerText = result.message || 'Failed to create project.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errText.innerText = 'Network error. Please try again.';
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = 'Create Project';
+            }
+        }
+
+                function toggleStatusMenu(event, menuId) {
+            event.stopPropagation();
+            document.querySelectorAll('[id^="statusMenu-"]').forEach(el => {
+                if (el.id !== menuId) el.classList.add('hidden');
+            });
+            document.getElementById(menuId).classList.toggle('hidden');
+        }
+        document.addEventListener('click', function () {
+            document.querySelectorAll('[id^="statusMenu-"]').forEach(el => el.classList.add('hidden'));
+        });
+
+        async function changeProjectStatus(event, projectId, status) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            const fd = new FormData();
+            fd.append('id', projectId);
+            fd.append('status', status);
+            fd.append('__RequestVerificationToken', getToken());
+
+            try {
+                const res = await fetch('/Projects/UpdateStatus', { method: 'POST', body: fd });
+                const result = await res.json();
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    setTimeout(() => location.reload(), 700);
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch {
+                showToast('Network error.', 'error');
+            }
+        }
+
+        // ============ VIEW PROJECT ============
+        async function openViewModal(id) {
+            try {
+                const res = await fetch(`/Projects/GetProject/${id}`);
+                if (!res.ok) return;
+                const p = await res.json();
+
+                document.getElementById('viewTitle').innerText = p.name;
+                document.getElementById('viewClient').innerText = p.client || '—';
+                document.getElementById('viewDomain').innerText = p.domain || '—';
+                document.getElementById('viewBudget').innerText = p.budget ? '$' + Number(p.budget).toLocaleString() : '—';
+                document.getElementById('viewDescription').innerText = p.description || 'No description.';
+                document.getElementById('viewProgressText').innerText = p.progress + '%';
+                document.getElementById('viewProgressBar').style.width = p.progress + '%';
+
+                // Timeline
+                const start = p.startDate ? new Date(p.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No start';
+                const end = p.deadline ? new Date(p.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline';
+                document.getElementById('viewTimeline').innerText = `${start} → ${end}`;
+
+                // Status badge
+                const sEl = document.getElementById('viewStatus');
+                sEl.innerText = p.status;
+                sEl.className = 'px-3 py-1 text-sm font-bold rounded-full ';
+                if (p.status === 'Active') sEl.classList.add('bg-emerald-100','text-emerald-700');
+                else if (p.status === 'AtRisk') sEl.classList.add('bg-amber-100','text-amber-700');
+                else if (p.status === 'Completed') sEl.classList.add('bg-blue-100','text-blue-700');
+                else if (p.status === 'OnHold') sEl.classList.add('bg-gray-200','text-gray-700');
+                else sEl.classList.add('bg-purple-100','text-purple-700');
+
+                // Priority badge
+                const pEl = document.getElementById('viewPriority');
+                pEl.innerText = p.priority;
+                pEl.className = 'px-3 py-1 text-sm font-bold rounded-full ';
+                if (p.priority === 'Critical') pEl.classList.add('bg-red-100','text-red-700');
+                else if (p.priority === 'High') pEl.classList.add('bg-orange-100','text-orange-700');
+                else if (p.priority === 'Medium') pEl.classList.add('bg-amber-100','text-amber-700');
+                else pEl.classList.add('bg-gray-100','text-gray-600');
+
+                // PM
+                document.getElementById('viewPMName').innerText = p.projectManagerName || 'Unassigned';
+                document.getElementById('viewPMEmail').innerText = p.projectManagerName ? 'Assigned' : 'No PM assigned';
+                document.getElementById('viewPMAvatar').src = p.projectManagerPicture
+                    || `https://i.pravatar.cc/100?u=${p.projectManagerId || 'default'}`;
+
+                openModal('viewProjectModal');
+            } catch (err) { console.error(err); }
+        }
+
+        // ============ EDIT PROJECT ============
+        async function openEditModal(id) {
+            try {
+                const res = await fetch(`/Projects/GetProject/${id}`);
+                if (!res.ok) return;
+                const p = await res.json();
+
+                document.getElementById('editId').value = p.id;
+                document.getElementById('editName').value = p.name;
+                document.getElementById('editClient').value = p.client || '';
+                document.getElementById('editDomain').value = p.domain || '';
+                document.getElementById('editPriority').value = p.priority;
+                document.getElementById('editStartDate').value = p.startDate || '';
+                document.getElementById('editDeadline').value = p.deadline || '';
+                document.getElementById('editBudget').value = p.budget || '';
+                document.getElementById('editDescription').value = p.description || '';
+
+                const pmEl = document.getElementById('editPM');
+                if (pmEl) pmEl.value = p.projectManagerId || '';
+
+                document.getElementById('editProjectError').classList.add('hidden');
+                openModal('editProjectModal');
+            } catch (err) { console.error(err); }
+        }
+
+        async function updateProject() {
+            const id = document.getElementById('editId').value;
+            const name = document.getElementById('editName').value.trim();
+
+            const errEl = document.getElementById('editProjectError');
+            const errText = document.getElementById('editProjectErrorText');
+
+            if (!name) { errText.innerText = 'Project name is required.'; errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+
+            const fd = new FormData();
+            fd.append('Id', id);
+            fd.append('Name', name);
+            fd.append('Client', document.getElementById('editClient').value);
+            fd.append('Domain', document.getElementById('editDomain').value);
+            fd.append('Priority', document.getElementById('editPriority').value);
+            fd.append('Status', document.getElementById('editStatus').value);
+            const sd = document.getElementById('editStartDate').value;
+            const dl = document.getElementById('editDeadline').value;
+            if (sd) fd.append('StartDate', sd);
+            if (dl) fd.append('Deadline', dl);
+            const b = document.getElementById('editBudget').value;
+            if (b) fd.append('Budget', b);
+            fd.append('Progress', document.getElementById('editProgress').value);
+            fd.append('Description', document.getElementById('editDescription').value);
+
+            const pmEl = document.getElementById('editPM');
+            if (pmEl) fd.append('ProjectManagerId', pmEl.value);
+
+            fd.append('__RequestVerificationToken', getToken());
+
+            try {
+                const res = await fetch('/Projects/UpdateProject', { method: 'POST', body: fd });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeModal('editProjectModal');
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 900);
+                } else {
+                    errText.innerText = result.message;
+                    errEl.classList.remove('hidden');
+                }
+            } catch {
+                errText.innerText = 'Network error.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        // ============ DELETE PROJECT ============
+        function openDeleteModal(id, name) {
+            deletingId = id;
+            document.getElementById('deleteProjectName').innerText = name;
+            openModal('deleteProjectModal');
+        }
+
+        async function confirmDelete() {
+            if (!deletingId) return;
+
+            const fd = new FormData();
+            fd.append('id', deletingId);
+            fd.append('__RequestVerificationToken', getToken());
+
+            try {
+                const res = await fetch('/Projects/DeleteProject', { method: 'POST', body: fd });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeModal('deleteProjectModal');
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch {
+                showToast('Network error.', 'error');
+            }
+        }
+
+        // ============ SEARCH & FILTER ============
+        function filterProjects() {
+            const q = document.getElementById('projectSearch').value.toLowerCase();
+            document.querySelectorAll('.project-card').forEach(card => {
+                const text = ((card.dataset.name || '') + ' ' + (card.dataset.client || '')).toLowerCase();
+                card.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        function filterByStatus(status, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.className = 'filter-btn px-5 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-50 shadow-sm border border-gray-200';
+            });
+            btn.className = 'filter-btn px-5 py-2.5 bg-brand text-sidebar text-sm font-bold rounded-full shadow-sm';
+
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+            });
+        }
+
+        // ============ TOAST ============
+        function showToast(message, type = 'success') {
+            const bg = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            const toast = document.createElement('div');
+            toast.className = `fixed top-6 right-6 z-[60] ${bg} text-white px-6 py-4 rounded-xl shadow-2xl font-semibold text-base transition-all duration-300`;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+}

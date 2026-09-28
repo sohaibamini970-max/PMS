@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Portal</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: '#FACC15',
+                        sidebar: '#15181D',
+                        sidebar2: '#1D2128',
+                        headerBlue: '#1D4ED8',
+                    },
+                    boxShadow: {
+                        glow: '0 8px 24px -8px rgba(250, 204, 21, 0.45)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* ---------------------------
+                   Admin sidebar nav link
+                   --------------------------- */
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #E5E7EB;
+            transition: all 0.15s ease;
+        }
+
+            .nav-link:hover {
+                background-color: #1D2128;
+                color: #FACC15;
+            }
+
+                .nav-link:hover svg {
+                    color: #FACC15;
+                }
+
+            .nav-link.active {
+                background-color: #FACC15;
+                color: #15181D;
+                box-shadow: 0 8px 24px -8px rgba(250, 204, 21, 0.45);
+            }
+
+                .nav-link.active svg {
+                    color: #15181D;
+                }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 antialiased h-screen overflow-hidden flex">
+
+    @{
+        // Extract logged-in user info from auth claims
+        var adminFullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "System Admin";
+        var adminEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        var adminPicture = User.FindFirst("ProfilePicture")?.Value;
+        if (string.IsNullOrWhiteSpace(adminPicture)) adminPicture = "https://i.pravatar.cc/150?img=11";
+
+        var orgName = User.FindFirst("OrganizationName")?.Value ?? "Organization";
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    }
+
+    <!-- ============================================= -->
+    <!-- ADMIN SIDEBAR — Solid black, always visible    -->
+    <!-- ============================================= -->
+    <aside class="w-64 h-full flex flex-col justify-between flex-shrink-0 relative z-20 shadow-2xl"
+           style="background-color: #15181D;">
+
+        <!-- Logo -->
+        <div class="h-20 px-5 flex items-center gap-3 border-b border-white/10 flex-shrink-0">
+            <div class="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <span class="block text-lg font-black text-white whitespace-nowrap">Admin <span class="text-red-400">Portal</span></span>
+                <span class="block text-xs font-bold text-emerald-400 truncate">@orgName</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+
+            <a asp-controller="Admin" asp-action="Index"
+               class="nav-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Users
+            </a>
+
+            <a asp-controller="Admin" asp-action="Roles"
+               class="nav-link @(currentController == "Admin" && currentAction == "Roles" ? "active" : "")">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Roles
+            </a>
+
+            <a asp-controller="Admin" asp-action="AuditLogs"
+               class="nav-link @(currentController == "Admin" && currentAction == "AuditLogs" ? "active" : "")">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Audit Logs
+            </a>
+
+            <div class="border-t border-white/10 my-3"></div>
+
+            <!-- Back to Main App -->
+            <a asp-controller="Home" asp-action="Index" class="nav-link">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to App
+            </a>
+        </nav>
+
+        <!-- Bottom: User card + Logout -->
+        <div class="p-3 border-t border-white/10 flex-shrink-0 space-y-2">
+
+            <!-- User info card -->
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background-color: #1D2128;">
+                <img class="w-9 h-9 rounded-full border-2 border-white/20 object-cover"
+                     src="@adminPicture"
+                     onerror="this.onerror=null; this.src='https://i.pravatar.cc/150?img=11'" alt="">
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-white truncate">@adminFullName</p>
+                    <p class="text-xs text-emerald-400 truncate">System Admin</p>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <a asp-controller="Account" asp-action="Logout" class="nav-link" style="background-color: #1D2128;">
+                <svg class="w-5 h-5 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="text-white font-semibold">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ============================================= -->
+    <!-- MAIN CONTENT AREA                              -->
+    <!-- ============================================= -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+
+        <!-- Top Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 shadow-sm">
+            <div class="flex items-center gap-3">
+                <h2 class="text-xl font-bold text-gray-900">Admin Portal</h2>
+                <span class="px-3 py-1 text-xs font-black bg-emerald-100 text-emerald-700 rounded-full uppercase tracking-wider">@orgName</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="px-3 py-1.5 text-xs font-black bg-red-100 text-red-700 rounded-full">🔐 SYSTEM ADMIN</span>
+                <img class="w-9 h-9 rounded-full border-2 border-gray-200 object-cover"
+                     src="@adminPicture"
+                     onerror="this.onerror=null; this.src='https://i.pravatar.cc/150?img=11'" alt="">
+                <div class="leading-tight hidden sm:block">
+                    <p class="text-sm font-bold text-gray-900">@adminFullName</p>
+                    <p class="text-xs text-gray-500">@adminEmail</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto bg-gray-100 p-6">
+            @RenderBody()
+        </div>
+    </main>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

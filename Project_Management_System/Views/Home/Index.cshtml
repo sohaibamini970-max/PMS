@@ -1,0 +1,451 @@
+﻿@model Project_Management_System.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    if (Model == null)
+    {
+        <div style="background:#fee;border:3px solid #c00;padding:20px;margin:20px;border-radius:10px;font-family:monospace;font-size:16px;">
+            <h2 style="color:#c00;margin:0 0 10px;">⚠ Model is NULL</h2>
+            <p><b>Controller:</b> @ViewContext.RouteData.Values["controller"]</p>
+            <p><b>Action:</b> @ViewContext.RouteData.Values["action"]</p>
+            <p><b>Area:</b> @(ViewContext.RouteData.Values["area"]?.ToString() ?? "(none)")</p>
+        </div>
+        return;
+    }
+
+    var isExecOrAdmin = Model.Role == "ExecutiveManager" || Model.Role == "SystemAdmin";
+    var isPM = Model.Role == "ProjectManager";
+    var isMember = Model.Role == "Member";
+
+    var scopeLabel = isExecOrAdmin ? "" : isPM ? "My " : "My ";
+    var subtitle = isExecOrAdmin
+        ? "Here is what's happening across your organization today."
+        : isPM
+            ? "Snapshot of the projects you manage."
+            : "Your tasks and projects at a glance.";
+
+    // Helper to pick a bar colour by percentage
+    string BarColor(int percent) =>
+        percent == 100 ? "#3B82F6" :
+        percent >= 70 ? "#FACC15" :
+        percent >= 40 ? "#F97316" :
+                         "#EF4444";
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    <!-- Dashboard Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                Welcome back, @Model.UserFullName! 👋
+            </h1>
+            <p class="text-base text-gray-500 mt-2">@subtitle</p>
+        </div>
+        <div class="flex gap-3">
+            <a asp-controller="Projects" asp-action="Index" class="px-5 py-2.5 bg-gray-700 border border-gray-600 text-white text-base font-medium rounded-lg hover:bg-gray-600 transition-colors shadow-sm">
+                View Projects
+            </a>
+            <a asp-controller="Tasks" asp-action="Index" class="px-5 py-2.5 bg-brand text-sidebar text-base font-semibold rounded-lg hover:bg-yellow-400 transition-colors shadow-sm flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                View Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+
+        <div class="bg-blue-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-32 h-32 bg-blue-500 rounded-full opacity-50"></div>
+            <div class="relative z-10">
+                <p class="text-base font-medium text-blue-50 mb-2">@(scopeLabel)Total Projects</p>
+                <h3 class="text-4xl font-bold mb-3">@Model.TotalProjects</h3>
+                <div class="flex items-center gap-1 text-sm">
+                    <span class="font-medium bg-blue-800/60 px-3 py-1 rounded-full">All Time</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-emerald-500 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-32 h-32 bg-emerald-400 rounded-full opacity-50"></div>
+            <div class="relative z-10">
+                <p class="text-base font-medium text-emerald-50 mb-2">@(scopeLabel)Active Projects</p>
+                <h3 class="text-4xl font-bold mb-3">@Model.ActiveProjects</h3>
+                <div class="flex items-center gap-1 text-sm">
+                    <span class="font-medium bg-emerald-800/60 px-3 py-1 rounded-full">Running</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-amber-500 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-32 h-32 bg-amber-400 rounded-full opacity-50"></div>
+            <div class="relative z-10">
+                <p class="text-base font-medium text-amber-50 mb-2">@(scopeLabel)Completed Projects</p>
+                <h3 class="text-4xl font-bold mb-3">@Model.CompletedProjects</h3>
+                <div class="flex items-center gap-1 text-sm">
+                    <span class="font-medium bg-amber-800/60 px-3 py-1 rounded-full">Done</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-red-500 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-32 h-32 bg-red-400 rounded-full opacity-50"></div>
+            <div class="relative z-10">
+                <p class="text-base font-medium text-red-50 mb-2">@(scopeLabel)Overdue Projects</p>
+                <h3 class="text-4xl font-bold mb-3">@Model.OverdueProjects</h3>
+                <div class="flex items-center gap-1 text-sm">
+                    <span class="font-medium bg-red-800/60 px-3 py-1 rounded-full">Needs Attention</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Section: Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+        <!-- Project Completion Grid (4 per row, vertical scroll) -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Project Completion (%)</h3>
+                    <p class="text-sm text-gray-500 mt-1">Click on a tile to view project details</p>
+                </div>
+                @if (Model.ChartProjects.Count > 0)
+                {
+                    <span class="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        @Model.ChartProjects.Count project@(Model.ChartProjects.Count != 1 ? "s" : "")
+                    </span>
+                }
+            </div>
+
+            @if (Model.ChartProjects.Count == 0)
+            {
+                <div class="h-64 flex items-center justify-center text-gray-400 italic text-base">
+                    No projects yet.
+                </div>
+            }
+            else
+            {
+                <!-- Fixed-height vertical scroll container -->
+                <div class="overflow-y-auto pr-2 chart-scroll" style="max-height: 380px;">
+                    <!-- 4-column grid — 5th project wraps to next row -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach (var p in Model.ChartProjects)
+                        {
+                            var barColor = BarColor(p.Percent);
+                            var barHeightPct = Math.Max(4, p.Percent); // show at least a sliver for 0%
+
+                            <button type="button"
+                                    onclick="openProjectModal('@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(p.Name))', @p.Percent, '@p.Status', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(p.Manager ?? ""))')"
+                                    class="group bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300 rounded-xl p-3 flex flex-col transition-all hover:shadow-md">
+
+                                <!-- Vertical bar (fixed height area) -->
+                                <div class="flex-1 flex flex-col justify-end items-center" style="height: 140px;">
+                                    <span class="text-sm font-black text-gray-700 mb-1">@p.Percent%</span>
+                                    <div class="w-10 rounded-t-lg transition-all group-hover:scale-x-110"
+                                         style="height: @(barHeightPct * 1.1)px; background-color: @barColor;">
+                                    </div>
+                                </div>
+
+                                <!-- Project name under bar -->
+                                <div class="mt-3 pt-2 border-t border-gray-200 text-center">
+                                    <p class="text-xs font-bold text-gray-800 leading-tight line-clamp-2"
+                                       title="@p.Name">
+                                        @p.Name
+                                    </p>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @if (Model.ChartProjects.Count > 4)
+                {
+                    <p class="text-xs text-gray-500 font-medium mt-3 flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        </svg>
+                        Scroll down to see all projects
+                    </p>
+                }
+            }
+        </div>
+
+        <!-- Project Health Box -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-semibold text-gray-800">Project Health</h3>
+                @{
+                    var healthClass = Model.OverallCompletion >= 70 ? "bg-emerald-50 text-emerald-700"
+                    : Model.OverallCompletion >= 40 ? "bg-amber-50 text-amber-700"
+                    : "bg-red-50 text-red-700";
+                    var healthText = Model.OverallCompletion >= 70 ? "On Track"
+                    : Model.OverallCompletion >= 40 ? "At Risk"
+                    : "Needs Attention";
+                }
+                <span class="text-sm font-medium px-3 py-1 rounded-full @healthClass">@healthText</span>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between text-base mb-2">
+                    <span class="text-gray-600">Overall Completion</span>
+                    <span class="font-semibold text-gray-900">@Model.OverallCompletion%</span>
+                </div>
+                <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="bg-brand h-full rounded-full" style="width: @(Model.OverallCompletion)%;"></div>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div class="flex items-center justify-between text-base">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <span class="text-gray-600">Completed Tasks</span>
+                    </div>
+                    <span class="font-semibold text-gray-900">@Model.CompletedTasks</span>
+                </div>
+                <div class="flex items-center justify-between text-base">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-brand"></span>
+                        <span class="text-gray-600">In Progress</span>
+                    </div>
+                    <span class="font-semibold text-gray-900">@Model.InProgressTasks</span>
+                </div>
+                <div class="flex items-center justify-between text-base">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="text-gray-600">Overdue Tasks</span>
+                    </div>
+                    <span class="font-semibold text-gray-900">@Model.OverdueTasks</span>
+                </div>
+                <div class="flex items-center justify-between text-base pt-2 border-t border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                        <span class="text-gray-600">Total Tasks</span>
+                    </div>
+                    <span class="font-semibold text-gray-900">@Model.TotalTasks</span>
+                </div>
+            </div>
+
+            <div class="mt-auto border-t border-gray-100 pt-5">
+                <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Upcoming Deadlines</h4>
+                <div class="space-y-4">
+                    @if (Model.UpcomingDeadlines.Count == 0)
+                    {
+                        <p class="text-sm text-gray-400 italic">No upcoming deadlines.</p>
+                    }
+                    @foreach (var d in Model.UpcomingDeadlines)
+                    {
+                        var bgClass = d.Color switch
+                        {
+                            "red" => "bg-red-50 text-red-600",
+                            "amber" => "bg-amber-50 text-amber-600",
+                            "purple" => "bg-purple-50 text-purple-600",
+                            _ => "bg-blue-50 text-blue-600"
+                        };
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-lg @bgClass flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-base font-medium text-gray-800">@d.Title</p>
+                                <p class="text-sm text-gray-500">@d.When</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Projects Table -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Recent Projects</h3>
+                <p class="text-sm text-gray-500 mt-1">Overview of your most recently updated projects.</p>
+            </div>
+            <a asp-controller="Projects" asp-action="Index" class="text-base text-brand font-medium hover:underline flex items-center gap-1">
+                View All Projects
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            @if (Model.RecentProjects.Count == 0)
+            {
+                <div class="p-10 text-center text-gray-400 italic">
+                    No projects to display yet.
+                </div>
+            }
+            else
+            {
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-sm text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-4 font-semibold">Project Name</th>
+                            <th class="px-6 py-4 font-semibold">Client</th>
+                            <th class="px-6 py-4 font-semibold">Deadline</th>
+                            <th class="px-6 py-4 font-semibold">Progress</th>
+                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-base divide-y divide-gray-100">
+                        @foreach (var p in Model.RecentProjects)
+                        {
+                            var statusClass = p.Status switch
+                            {
+                                "Active" => "bg-green-100 text-green-700",
+                                "AtRisk" => "bg-amber-100 text-amber-700",
+                                "Completed" => "bg-blue-100 text-blue-700",
+                                "OnHold" => "bg-gray-200 text-gray-700",
+                                "Planning" => "bg-purple-100 text-purple-700",
+                                "Done" => "bg-indigo-100 text-indigo-700",
+                                _ => "bg-gray-100 text-gray-600"
+                            };
+                            var statusLabel = p.Status switch
+                            {
+                                "Active" => "On Track",
+                                "AtRisk" => "At Risk",
+                                "Completed" => "Completed",
+                                "OnHold" => "On Hold",
+                                "Planning" => "Planning",
+                                "Done" => "Done",
+                                _ => p.Status
+                            };
+                            var initialsBg = p.Progress >= 70 ? "bg-blue-100 text-blue-600"
+                            : p.Progress >= 40 ? "bg-purple-100 text-purple-600"
+                            : "bg-emerald-100 text-emerald-600";
+                            var barColor = p.Progress >= 70 ? "bg-brand"
+                            : p.Progress >= 40 ? "bg-amber-500"
+                            : "bg-emerald-500";
+
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-lg @initialsBg flex items-center justify-center font-bold text-sm">
+                                            @p.Initials
+                                        </div>
+                                        <p class="font-medium text-gray-900">@p.Name</p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-gray-700">@p.Client</td>
+                                <td class="px-6 py-5 text-gray-500">@(p.Deadline?.ToString("MMM dd, yyyy") ?? "—")</td>
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div class="@barColor h-full" style="width: @(p.Progress)%;"></div>
+                                        </div>
+                                        <span class="text-sm text-gray-500">@p.Progress%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span class="px-3 py-1 text-sm font-medium rounded-full @statusClass">@statusLabel</span>
+                                </td>
+                                <td class="px-6 py-5 text-right">
+                                    <a asp-controller="Projects" asp-action="Index"
+                                       class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                                        View
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- PROJECT DETAILS MODAL -->
+<div id="projectModal" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+        <div class="bg-gray-50 px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Project Name</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-200 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-500">Status</span>
+                <span class="px-3 py-1 text-sm font-semibold rounded-full" id="modalStatus">On Track</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-500">Completion</span>
+                <span class="text-lg font-bold text-gray-900" id="modalPercent">0%</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-500">Project Manager</span>
+                <span class="text-base font-medium text-gray-900" id="modalManager">—</span>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
+            <button onclick="closeModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">Close</button>
+            <a asp-controller="Projects" asp-action="Index" class="px-4 py-2 bg-brand text-sidebar text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors">Go to Projects</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openProjectModal(name, percent, status, manager) {
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalPercent').innerText = percent + '%';
+            document.getElementById('modalManager').innerText = manager || '—';
+
+            const statusEl = document.getElementById('modalStatus');
+            statusEl.innerText = status;
+            statusEl.className = 'px-3 py-1 text-sm font-semibold rounded-full ';
+
+            if (status === 'Active') statusEl.classList.add('bg-green-100', 'text-green-700');
+            else if (status === 'AtRisk') statusEl.classList.add('bg-amber-100', 'text-amber-700');
+            else if (status === 'Completed') statusEl.classList.add('bg-blue-100', 'text-blue-700');
+            else if (status === 'Planning') statusEl.classList.add('bg-purple-100', 'text-purple-700');
+            else statusEl.classList.add('bg-gray-100', 'text-gray-700');
+
+            document.getElementById('projectModal').classList.remove('hidden');
+            document.getElementById('projectModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('projectModal').classList.add('hidden');
+            document.getElementById('projectModal').classList.remove('flex');
+        }
+    </script>
+
+    <style>
+        /* Slim vertical scrollbar for the chart grid */
+        .chart-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chart-scroll::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        .chart-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+            .chart-scroll::-webkit-scrollbar-thumb:hover {
+                background: #9ca3af;
+            }
+        /* Firefox */
+        .chart-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db #f3f4f6;
+        }
+        /* Truncate long project names to 2 lines */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+}

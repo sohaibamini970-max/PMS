@@ -1,0 +1,14 @@
+﻿{
+  "services": {
+    "web": {
+      "runtime": "container",
+      "entrypoint": "Dockerfile.vercel"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/web"
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+﻿@model Project_Management_System.ViewModels.TimelineViewModel
+@{
+    ViewData["Title"] = "Timeline";
+
+    string ProjectGradient(string status) => status switch
+    {
+        "Active" => "from-emerald-500 via-emerald-400 to-teal-400",
+        "AtRisk" => "from-amber-500 via-orange-500 to-orange-400",
+        "Completed" => "from-blue-500 via-blue-500 to-indigo-500",
+        "Done" => "from-purple-500 via-purple-500 to-indigo-500",
+        "OnHold" => "from-gray-500 via-gray-400 to-gray-500",
+        "Planning" => "from-purple-500 via-purple-500 to-indigo-500",
+        _ => "from-gray-500 via-gray-400 to-gray-500"
+    };
+
+    string ProjectBorder(string status) => status switch
+    {
+        "Active" => "border-emerald-200",
+        "AtRisk" => "border-orange-200",
+        "Completed" => "border-blue-200",
+        "Done" => "border-purple-200",
+        "OnHold" => "border-gray-200",
+        "Planning" => "border-purple-200",
+        _ => "border-gray-200"
+    };
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Project Timeline
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">
+                @(User.IsInRole("ProjectManager")
+                                ? "Review completed, due and pending work across the projects you manage."
+                                : "Review completed, due and pending work across all projects.")
+            </p>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-bold text-blue-100 uppercase tracking-wide">Projects</p>
+                    <svg class="w-6 h-6 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </div>
+                <h3 class="text-4xl font-black">@Model.TotalProjects</h3>
+                <p class="text-sm text-blue-100 font-medium mt-1">Total Active</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-bold text-purple-100 uppercase tracking-wide">Total Tasks</p>
+                    <svg class="w-6 h-6 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3"></path></svg>
+                </div>
+                <h3 class="text-4xl font-black">@Model.TotalTasks</h3>
+                <p class="text-sm text-purple-100 font-medium mt-1">Across all projects</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-bold text-emerald-100 uppercase tracking-wide">Completed</p>
+                    <svg class="w-6 h-6 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-4xl font-black">@Model.CompletedTasks</h3>
+                <p class="text-sm text-emerald-100 font-medium mt-1">Tasks finished</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-bold text-amber-100 uppercase tracking-wide">Pending</p>
+                    <svg class="w-6 h-6 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-4xl font-black">@Model.PendingTasks</h3>
+                <p class="text-sm text-amber-100 font-medium mt-1">In progress or due</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-bold text-red-100 uppercase tracking-wide">Overdue</p>
+                    <svg class="w-6 h-6 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-4xl font-black">@Model.OverdueTasks</h3>
+                <p class="text-sm text-red-100 font-medium mt-1">Needs attention</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIMELINE CARDS -->
+    <div class="space-y-6">
+
+        @if (Model.Projects.Count == 0)
+        {
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-16 text-center">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">No projects to display</h3>
+                <p class="text-gray-500">Projects you can access will appear here.</p>
+            </div>
+        }
+
+        @foreach (var proj in Model.Projects)
+        {
+            var gradient = ProjectGradient(proj.Status);
+            var borderColor = ProjectBorder(proj.Status);
+
+            <div class="bg-white rounded-2xl shadow-xl border-2 @borderColor overflow-hidden">
+
+                <!-- Project Header -->
+                <div class="bg-gradient-to-r @gradient px-6 py-5">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center text-white font-black text-lg shadow-lg">@proj.Initials</div>
+                            <div>
+                                <h2 class="text-2xl font-black text-white drop-shadow">@proj.Name</h2>
+                                <p class="text-base text-white/90 font-semibold mt-0.5">@proj.Client</p>
+                            </div>
+                        </div>
+
+                        <!-- Summary chips -->
+                        <div class="flex gap-2 flex-wrap">
+                            @if (proj.CompletedCount > 0)
+                            {
+                                <span class="px-3 py-1.5 bg-white/25 backdrop-blur-sm text-white text-sm font-bold rounded-full flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4"></path></svg>
+                                    @proj.CompletedCount Completed
+                                </span>
+                            }
+                            @if (proj.PendingCount > 0)
+                            {
+                                <span class="px-3 py-1.5 bg-white/25 backdrop-blur-sm text-white text-sm font-bold rounded-full flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    @proj.PendingCount Pending
+                                </span>
+                            }
+                            @if (proj.OverdueCount > 0)
+                            {
+                                <span class="px-3 py-1.5 bg-white/25 backdrop-blur-sm text-white text-sm font-bold rounded-full flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    @proj.OverdueCount Overdue
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Date range -->
+                    <div class="mt-4 flex items-center gap-3 text-white">
+                        <div class="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="text-sm font-bold">
+                                Start: @(proj.StartDate?.ToString("MMM dd, yyyy") ?? "—")
+                            </span>
+                        </div>
+                        <svg class="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                        <div class="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-sm font-bold">
+                                Deadline: @(proj.Deadline?.ToString("MMM dd, yyyy") ?? "—")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Span Bar -->
+                @if (proj.ProjectSpanDays > 0)
+                {
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wide w-24">Project Span</span>
+                            <div class="flex-1 relative h-7 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="absolute h-full bg-gradient-to-r @gradient rounded-full shadow-sm flex items-center px-3" style="left: 0%; width: 100%;">
+                                    <span class="text-xs font-bold text-white">@proj.ProjectSpanLabel</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Task rows -->
+                <div class="p-6 space-y-3">
+                    @if (proj.Tasks.Count == 0)
+                    {
+                        <p class="text-sm text-gray-400 italic text-center py-4">No tasks in this project.</p>
+                    }
+
+                    @foreach (var t in proj.Tasks)
+                    {
+                        // Per-status class maps
+                        var (borderClass, bgTintClass, badgeClass, barClass, noteClass) = t.Status switch
+                        {
+                            "Completed" => ("border-emerald-500", "bg-emerald-50/50",
+                            "bg-emerald-100 text-emerald-700",
+                            "bg-emerald-500", "text-emerald-600"),
+                            "Overdue" => ("border-red-500", "bg-red-50/50",
+                            "bg-red-100 text-red-700",
+                            "bg-red-500", "text-red-600"),
+                            _ => ("border-amber-500", "bg-amber-50/50",
+                            "bg-amber-100 text-amber-700",
+                            "bg-gradient-to-r from-amber-400 to-amber-500", "text-amber-600")
+                        };
+
+                        var statusLabel = t.Status.ToUpper();
+
+                        <div class="border-l-4 @borderClass @bgTintClass rounded-lg p-4">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="px-2.5 py-1 text-xs font-black @badgeClass rounded-full">@statusLabel</span>
+                                        <span class="text-xs text-gray-400 font-bold">#@t.Code</span>
+                                    </div>
+                                    <h4 class="text-base font-bold text-gray-900">@t.Title</h4>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-bold text-gray-700">@t.DateRangeLabel</p>
+                                    <p class="text-xs @noteClass font-bold">@t.StatusNote</p>
+                                </div>
+                            </div>
+
+                            <!-- Task span bar -->
+                            @if (proj.ProjectSpanDays > 0)
+                            {
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-gray-500 w-24">Task span</span>
+                                    <div class="flex-1 relative h-5 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="absolute h-full @barClass rounded-full flex items-center justify-end pr-2"
+                                             style="left: @(t.LeftPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; width: @(t.WidthPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;">
+                                            @if (!string.IsNullOrEmpty(t.DurationLabel))
+                                            {
+                                                <span class="text-[10px] font-bold text-white">@t.DurationLabel</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-8 bg-white rounded-xl shadow-md border border-gray-100 p-4">
+        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Legend</h3>
+        <div class="flex flex-wrap gap-5">
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-emerald-500"></span>
+                <span class="text-sm font-semibold text-gray-700">Completed</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-amber-500"></span>
+                <span class="text-sm font-semibold text-gray-700">Pending / In Progress</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-red-500"></span>
+                <span class="text-sm font-semibold text-gray-700">Overdue</span>
+            </div>
+        </div>
+    </div>
+</div>

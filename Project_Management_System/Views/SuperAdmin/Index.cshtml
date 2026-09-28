@@ -1,0 +1,505 @@
+﻿@model List<Project_Management_System.ViewModels.OrganizationListItemViewModel>
+@{
+    ViewData["Title"] = "Organizations";
+    Layout = "~/Views/Shared/_SuperAdminLayout.cshtml";
+}
+
+<div class="bg-gray-100 min-h-screen">
+
+    <!-- ============================================= -->
+    <!-- PAGE HEADER                                    -->
+    <!-- ============================================= -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                Organizations
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">Manage all client organizations on the ARG PMS platform.</p>
+        </div>
+        <button onclick="openAddOrgModal()" class="px-6 py-3 bg-brand text-sidebar text-base font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-glow flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            New Organization
+        </button>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- KPI CARDS                                      -->
+    <!-- ============================================= -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-purple-100 uppercase tracking-wide">Total Clients</p>
+            <h3 class="text-4xl font-black mt-2">@Model.Count</h3>
+            <p class="text-xs text-purple-100 font-medium mt-1">Organizations</p>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-emerald-100 uppercase tracking-wide">Active</p>
+            <h3 class="text-4xl font-black mt-2">@Model.Count(o => o.Status == "Active")</h3>
+            <p class="text-xs text-emerald-100 font-medium mt-1">Running clients</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-amber-100 uppercase tracking-wide">On Trial</p>
+            <h3 class="text-4xl font-black mt-2">@Model.Count(o => o.Status == "Trial")</h3>
+            <p class="text-xs text-amber-100 font-medium mt-1">Free trial</p>
+        </div>
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-5 text-white">
+            <p class="text-xs font-bold text-red-100 uppercase tracking-wide">Suspended</p>
+            <h3 class="text-4xl font-black mt-2">@Model.Count(o => o.Status == "Suspended")</h3>
+            <p class="text-xs text-red-100 font-medium mt-1">Needs review</p>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- ORGANIZATIONS GRID                             -->
+    <!-- ============================================= -->
+    @if (!Model.Any())
+    {
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-16 text-center">
+            <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-gray-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No organizations yet</h3>
+            <p class="text-gray-500 mb-6">Create your first client organization to get started.</p>
+            <button onclick="openAddOrgModal()" class="px-6 py-3 bg-brand text-sidebar font-bold rounded-lg hover:bg-yellow-400">
+                Create First Organization
+            </button>
+        </div>
+    }
+    else
+    {
+        <div id="orgGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            @foreach (var org in Model)
+            {
+                var statusColors = org.Status switch
+                {
+                    "Active" => new { Border = "border-emerald-300", Header = "from-emerald-500 to-teal-500", Badge = "ACTIVE" },
+                    "Trial" => new { Border = "border-amber-300", Header = "from-amber-500 to-orange-500", Badge = "TRIAL" },
+                    "Suspended" => new { Border = "border-red-300", Header = "from-red-500 to-rose-600", Badge = "SUSPENDED" },
+                    _ => new { Border = "border-gray-300", Header = "from-gray-500 to-gray-600", Badge = "EXPIRED" }
+                };
+                var initial = string.IsNullOrEmpty(org.Name) ? "?" : org.Name.Substring(0, 1).ToUpper();
+
+                <div class="org-card bg-white rounded-2xl shadow-xl border-2 @statusColors.Border overflow-hidden"
+                     data-id="@org.Id" data-name="@org.Name" data-status="@org.Status">
+                    <div class="bg-gradient-to-r @statusColors.Header px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center text-white font-black text-lg shadow">
+                                @initial
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-xl font-black text-white drop-shadow truncate">@org.Name</h3>
+                                <p class="text-sm text-white/90 font-semibold truncate">@($"{org.Slug}.argpms.com")</p>
+                            </div>
+                            <span class="px-2.5 py-1 text-xs font-black bg-white/25 text-white rounded-full">@statusColors.Badge</span>
+                        </div>
+                    </div>
+
+                    <div class="p-5">
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">System Administrator</p>
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                            <img class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="https://i.pravatar.cc/100?img=@(Math.Abs(org.Id.GetHashCode() % 70))" alt="">
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-gray-900 truncate">@(org.AdminName ?? "Not assigned")</p>
+                                <p class="text-xs text-gray-500 truncate">@(org.AdminEmail ?? "—")</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <div class="text-center p-2 bg-blue-50 rounded-lg">
+                                <p class="text-lg font-black text-blue-700">@org.TotalUsers</p>
+                                <p class="text-[10px] font-bold text-blue-600 uppercase">Users</p>
+                            </div>
+                            <div class="text-center p-2 bg-emerald-50 rounded-lg">
+                                <p class="text-lg font-black text-emerald-700">0</p>
+                                <p class="text-[10px] font-bold text-emerald-600 uppercase">Projects</p>
+                            </div>
+                            <div class="text-center p-2 bg-purple-50 rounded-lg">
+                                <p class="text-lg font-black text-purple-700">0</p>
+                                <p class="text-[10px] font-bold text-purple-600 uppercase">Tasks</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-gray-500 font-semibold mb-4">
+                            <span>📅 @org.CreatedAt.ToString("MMM dd, yyyy")</span>
+                            <span class="@(org.Status == "Suspended" ? "text-red-600" : "text-emerald-600")">
+                                @(org.Status == "Suspended" ? "⚠ Suspended" : "💳 " + org.Status)
+                            </span>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="openViewOrgModal('@org.Id')" class="flex-1 py-2.5 bg-blue-50 text-blue-700 rounded-lg font-bold text-sm hover:bg-blue-100">
+                                View Details
+                            </button>
+                            <button onclick="toggleStatus('@org.Id', this)" class="py-2.5 px-3 bg-amber-50 text-amber-600 rounded-lg font-bold text-sm hover:bg-amber-100" title="Toggle status">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                            </button>
+                            <button onclick="deleteOrg('@org.Id', this)" class="py-2.5 px-3 bg-red-50 text-red-600 rounded-lg font-bold text-sm hover:bg-red-100" title="Delete">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- ============================================= -->
+<!-- ADD ORGANIZATION MODAL                         -->
+<!-- ============================================= -->
+<div id="addOrgModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+
+        <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Create New Organization</h3>
+                    <p class="text-sm text-purple-100">Onboard a new client and their first System Admin</p>
+                </div>
+            </div>
+            <button onclick="closeModal('addOrgModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <form id="createOrgForm" class="p-6 space-y-6 overflow-y-auto" onsubmit="event.preventDefault(); createOrganization();">
+            @Html.AntiForgeryToken()
+
+            <div>
+                <h4 class="text-base font-black text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-black">1</span>
+                    Organization Details
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Organization Name *</label>
+                        <input type="text" id="orgName" placeholder="e.g. Acme Inc." class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Subdomain *</label>
+                        <div class="flex">
+                            <input type="text" id="orgSlug" placeholder="acme" class="flex-1 border border-r-0 border-gray-300 rounded-l-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <span class="px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-r-lg text-sm font-semibold text-gray-600">.argpms.com</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Plan</label>
+                        <select id="orgPlan" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="Free Trial (14 days)">Free Trial (14 days)</option>
+                            <option value="Starter">Starter</option>
+                            <option value="Pro" selected>Pro</option>
+                            <option value="Enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Contact Email</label>
+                        <input type="email" id="orgEmail" placeholder="contact@acme.com" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Phone</label>
+                        <input type="tel" id="orgPhone" placeholder="+1 555 0100" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-base font-black text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-black">2</span>
+                    First System Administrator
+                </h4>
+                <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl mb-4">
+                    <p class="text-sm font-semibold text-emerald-900">👤 This person will manage all PMs, Members and additional System Admins for this organization.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Full Name *</label>
+                        <input type="text" id="adminName" placeholder="e.g. John Doe" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Email *</label>
+                        <input type="email" id="adminEmail" placeholder="john@acme.com" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Password *</label>
+                        <input type="password" id="adminPassword" placeholder="Minimum 8 characters" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">Confirm Password *</label>
+                        <input type="password" id="adminPasswordConfirm" placeholder="Re-enter password" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div id="createOrgError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm font-semibold text-red-700" id="createOrgErrorText"></p>
+            </div>
+
+        </form>
+
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button type="button" onclick="closeModal('addOrgModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Cancel</button>
+            <button type="button" id="btnCreateOrg" onclick="createOrganization()" class="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg font-bold hover:from-purple-600 hover:to-indigo-700 flex items-center gap-2 disabled:opacity-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                <span id="btnCreateOrgText">Create Organization</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- VIEW ORGANIZATION MODAL                        -->
+<!-- ============================================= -->
+<div id="viewOrgModal" style="display:none;" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white" id="viewOrgTitle">Organization Details</h3>
+            <button onclick="closeModal('viewOrgModal')" class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Subdomain</span>
+                <span class="text-base font-bold text-gray-900" id="viewOrgSlug">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Status</span>
+                <span class="px-3 py-1 text-sm font-bold rounded-full" id="viewOrgStatus">—</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-sm font-semibold text-gray-500">Plan</span>
+                <span class="text-base font-bold text-gray-900" id="viewOrgPlan">—</span>
+            </div>
+            <div class="pb-3 border-b border-gray-100">
+                <p class="text-sm font-semibold text-gray-500 mb-2">System Administrator</p>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <img class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="https://i.pravatar.cc/100?img=11" alt="">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900" id="viewOrgAdminName">—</p>
+                        <p class="text-xs text-gray-500" id="viewOrgAdminEmail">—</p>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <p class="text-2xl font-black text-blue-700" id="viewOrgUsers">0</p>
+                    <p class="text-xs font-bold text-blue-600 uppercase">Users</p>
+                </div>
+                <div class="text-center p-3 bg-emerald-50 rounded-lg">
+                    <p class="text-2xl font-black text-emerald-700">0</p>
+                    <p class="text-xs font-bold text-emerald-600 uppercase">Projects</p>
+                </div>
+                <div class="text-center p-3 bg-purple-50 rounded-lg">
+                    <p class="text-2xl font-black text-purple-700">0</p>
+                    <p class="text-xs font-bold text-purple-600 uppercase">Tasks</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button onclick="closeModal('viewOrgModal')" class="px-5 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700">Close</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'flex';
+        }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        }
+
+        // ============================================
+        // ADD ORGANIZATION
+        // ============================================
+        function openAddOrgModal() {
+            ['orgName', 'orgSlug', 'orgEmail', 'orgPhone', 'adminName', 'adminEmail', 'adminPassword', 'adminPasswordConfirm']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            document.getElementById('orgPlan').value = 'Pro';
+            document.getElementById('createOrgError').classList.add('hidden');
+            openModal('addOrgModal');
+        }
+
+        async function createOrganization() {
+            const name = document.getElementById('orgName').value.trim();
+            const slug = document.getElementById('orgSlug').value.trim().toLowerCase();
+            const plan = document.getElementById('orgPlan').value;
+            const contactEmail = document.getElementById('orgEmail').value.trim();
+            const phone = document.getElementById('orgPhone').value.trim();
+            const adminFullName = document.getElementById('adminName').value.trim();
+            const adminEmail = document.getElementById('adminEmail').value.trim();
+            const adminPassword = document.getElementById('adminPassword').value;
+            const adminPasswordConfirm = document.getElementById('adminPasswordConfirm').value;
+
+            const errorEl = document.getElementById('createOrgError');
+            const errorText = document.getElementById('createOrgErrorText');
+
+            // Client-side validation
+            if (!name || !slug || !adminFullName || !adminEmail || !adminPassword) {
+                errorText.innerText = 'Please fill in all required fields.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            if (!/^[a-z0-9\-]+$/.test(slug)) {
+                errorText.innerText = 'Subdomain can only contain lowercase letters, numbers, and hyphens.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            if (adminPassword !== adminPasswordConfirm) {
+                errorText.innerText = 'Admin passwords do not match.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            if (adminPassword.length < 8) {
+                errorText.innerText = 'Admin password must be at least 8 characters.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            errorEl.classList.add('hidden');
+
+            // Get antiforgery token
+            const token = document.querySelector('#createOrgForm input[name="__RequestVerificationToken"]').value;
+
+            // Disable button
+            const btn = document.getElementById('btnCreateOrg');
+            const btnText = document.getElementById('btnCreateOrgText');
+            btn.disabled = true;
+            btnText.innerText = 'Creating...';
+
+            try {
+                const formData = new FormData();
+                formData.append('OrganizationName', name);
+                formData.append('Slug', slug);
+                formData.append('Plan', plan);
+                formData.append('ContactEmail', contactEmail);
+                formData.append('Phone', phone);
+                formData.append('AdminFullName', adminFullName);
+                formData.append('AdminEmail', adminEmail);
+                formData.append('AdminPassword', adminPassword);
+                formData.append('AdminPasswordConfirm', adminPasswordConfirm);
+                formData.append('__RequestVerificationToken', token);
+
+                const response = await fetch('/SuperAdmin/CreateOrganization', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('addOrgModal');
+                    showToast('✅ ' + result.message, 'success');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    errorText.innerText = result.message || 'Something went wrong.';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorText.innerText = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = 'Create Organization';
+            }
+        }
+
+        // ============================================
+        // VIEW ORGANIZATION
+        // ============================================
+        async function openViewOrgModal(id) {
+            try {
+                const response = await fetch(`/SuperAdmin/GetOrganization/${id}`);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                document.getElementById('viewOrgTitle').innerText = data.name;
+                document.getElementById('viewOrgSlug').innerText = data.slug + '.argpms.com';
+                document.getElementById('viewOrgPlan').innerText = data.plan;
+                document.getElementById('viewOrgAdminName').innerText = data.adminName;
+                document.getElementById('viewOrgAdminEmail').innerText = data.adminEmail;
+                document.getElementById('viewOrgUsers').innerText = data.totalUsers;
+
+                const statusEl = document.getElementById('viewOrgStatus');
+                statusEl.innerText = data.status;
+                statusEl.className = 'px-3 py-1 text-sm font-bold rounded-full ';
+                if (data.status === 'Active') statusEl.classList.add('bg-emerald-100', 'text-emerald-700');
+                else if (data.status === 'Trial') statusEl.classList.add('bg-amber-100', 'text-amber-700');
+                else statusEl.classList.add('bg-red-100', 'text-red-700');
+
+                openModal('viewOrgModal');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ============================================
+        // TOGGLE STATUS
+        // ============================================
+        async function toggleStatus(id, btn) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
+                          document.querySelector('#createOrgForm input[name="__RequestVerificationToken"]').value;
+
+            if (!confirm('Toggle this organization\'s status?')) return;
+
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('__RequestVerificationToken', token);
+
+            const response = await fetch('/SuperAdmin/ToggleStatus', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(`Status changed to ${result.newStatus}`, 'success');
+                setTimeout(() => window.location.reload(), 800);
+            }
+        }
+
+        // ============================================
+        // DELETE ORGANIZATION
+        // ============================================
+        async function deleteOrg(id, btn) {
+            const card = btn.closest('.org-card');
+            const name = card.dataset.name;
+
+            if (!confirm(`Delete "${name}"?\n\nThis will permanently remove the organization and ALL its users, projects and data. This cannot be undone.`)) return;
+
+            const token = document.querySelector('#createOrgForm input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('__RequestVerificationToken', token);
+
+            const response = await fetch('/SuperAdmin/DeleteOrganization', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.success) {
+                card.remove();
+                showToast('Organization deleted.', 'success');
+            }
+        }
+
+        // ============================================
+        // TOAST
+        // ============================================
+        function showToast(message, type = 'success') {
+            const bg = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            const toast = document.createElement('div');
+            toast.className = `fixed top-6 right-6 z-[60] ${bg} text-white px-6 py-4 rounded-xl shadow-2xl font-semibold text-base transition-all duration-300`;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+}

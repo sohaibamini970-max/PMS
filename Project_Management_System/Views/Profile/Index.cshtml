@@ -1,0 +1,414 @@
+﻿@model Project_Management_System.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Doughnut colours
+    var doughnut = new[] { Model.CompletedTasks, Model.PendingTasks, Model.OverdueTasks };
+}
+
+<div class="bg-gray-100 min-h-screen p-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                My Profile
+            </h1>
+            <p class="text-lg text-gray-600 mt-2 font-medium">View your performance, projects and tasks.</p>
+        </div>
+        <a asp-controller="Settings" asp-action="Index"
+           class="px-6 py-3 bg-brand text-sidebar text-base font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-glow flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit Profile
+        </a>
+    </div>
+
+    <!-- Profile Hero -->
+    <div class="rounded-2xl shadow-xl overflow-hidden mb-6">
+        <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 px-6 py-6 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
+            <div class="absolute -right-4 -bottom-10 w-28 h-28 bg-white/10 rounded-full"></div>
+            <div class="relative flex flex-col md:flex-row items-start md:items-center gap-5">
+                <div class="relative">
+                    <img class="w-24 h-24 rounded-2xl border-4 border-white shadow-lg object-cover"
+                         src="@Model.AvatarUrl"
+                         onerror="this.onerror=null; this.src='https://i.pravatar.cc/200?u=@Model.Id'">
+                    <span class="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 border-4 border-white rounded-full"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-3xl font-black text-white drop-shadow truncate">@Model.FullName</h2>
+                    <p class="text-base text-blue-100 font-medium mt-1 truncate">@Model.Email</p>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <span class="px-3 py-1 bg-white/25 backdrop-blur-sm text-white text-sm font-bold rounded-full">@Model.RoleDisplay</span>
+                        @if (!string.IsNullOrEmpty(Model.Phone))
+                        {
+                            <span class="px-3 py-1 bg-white/25 backdrop-blur-sm text-white text-sm font-bold rounded-full">📞 @Model.Phone</span>
+                        }
+                    </div>
+                </div>
+                <div class="text-right hidden md:block">
+                    <p class="text-xs text-blue-100 uppercase font-bold tracking-wide">Member Since</p>
+                    <p class="text-2xl font-black text-white mt-1">@Model.MemberSince</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Strip -->
+        <div class="bg-white grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+            <div class="p-4 text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wide">Projects</p>
+                <p class="text-3xl font-black text-blue-600 mt-1">@Model.TotalProjects</p>
+            </div>
+            <div class="p-4 text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wide">Tasks</p>
+                <p class="text-3xl font-black text-purple-600 mt-1">@Model.TotalTasks</p>
+            </div>
+            <div class="p-4 text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wide">Teams</p>
+                <p class="text-3xl font-black text-emerald-600 mt-1">@Model.TotalTeams</p>
+            </div>
+            <div class="p-4 text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wide">Success Rate</p>
+                <p class="text-3xl font-black text-brand mt-1">@Model.SuccessRate%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-bold text-emerald-100 uppercase tracking-wide">Completed</p>
+                    <svg class="w-7 h-7 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-5xl font-black">@Model.CompletedTasks</h3>
+                <p class="text-sm text-emerald-100 font-medium mt-2">Tasks finished</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-bold text-amber-100 uppercase tracking-wide">Pending</p>
+                    <svg class="w-7 h-7 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 class="text-5xl font-black">@Model.PendingTasks</h3>
+                <p class="text-sm text-amber-100 font-medium mt-2">In progress</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm font-bold text-red-100 uppercase tracking-wide">Overdue</p>
+                    <svg class="w-7 h-7 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-5xl font-black">@Model.OverdueTasks</h3>
+                <p class="text-sm text-red-100 font-medium mt-2">Past deadline</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Performance Breakdown</h3>
+            <div class="h-56 flex items-center justify-center">
+                <canvas id="doughnutChart"></canvas>
+            </div>
+            <div class="mt-4 flex justify-around text-sm">
+                <div class="text-center">
+                    <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 mr-1"></span>
+                    <span class="text-gray-600 font-semibold">Completed</span>
+                </div>
+                <div class="text-center">
+                    <span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span>
+                    <span class="text-gray-600 font-semibold">Pending</span>
+                </div>
+                <div class="text-center">
+                    <span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                    <span class="text-gray-600 font-semibold">Overdue</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Monthly Performance</h3>
+                <span class="text-sm text-gray-500 font-medium">Last 6 months</span>
+            </div>
+            <div class="h-56">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects + Side Panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold text-gray-900">
+                    Projects <span class="text-gray-500 font-medium">@Model.ProjectsSectionLabel</span>
+                </h3>
+                <a asp-controller="Projects" asp-action="Index" class="text-sm text-blue-600 font-bold hover:underline">View All</a>
+            </div>
+
+            <div class="space-y-3">
+                @if (Model.Projects.Count == 0)
+                {
+                    <div class="text-center py-10 text-gray-400 italic">
+                        No projects to display.
+                    </div>
+                }
+                @foreach (var p in Model.Projects)
+                {
+                    var (borderClass, barColor, statusClass, statusLabel) = p.Status switch
+                    {
+                        "Active" => ("border-emerald-500", "bg-emerald-500", "bg-emerald-100 text-emerald-700", "Active"),
+                        "AtRisk" => ("border-amber-500", "bg-amber-500", "bg-amber-100 text-amber-700", "At Risk"),
+                        "Completed" => ("border-blue-500", "bg-blue-500", "bg-blue-100 text-blue-700", "Completed"),
+                        "OnHold" => ("border-gray-400", "bg-gray-400", "bg-gray-200 text-gray-700", "On Hold"),
+                        "Planning" => ("border-purple-500", "bg-purple-500", "bg-purple-100 text-purple-700", "Planning"),
+                        "Done" => ("border-indigo-500", "bg-indigo-500", "bg-indigo-100 text-indigo-700", "Done"),
+                        _ => ("border-gray-400", "bg-gray-400", "bg-gray-100 text-gray-600", p.Status)
+                    };
+
+                    <div class="bg-gray-50 rounded-lg border-l-4 @borderClass p-4 hover:bg-gray-100 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="text-base font-bold text-gray-900">@p.Name</h4>
+                                <p class="text-sm text-gray-500">@p.Client</p>
+                            </div>
+                            <span class="px-2.5 py-1 @statusClass text-xs font-black rounded-full uppercase">@statusLabel</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600 font-medium">Progress</span>
+                            <span class="text-gray-900 font-bold">@p.Progress%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="@barColor h-full rounded-full" style="width: @(p.Progress)%;"></div>
+                        </div>
+                        <div class="flex items-center justify-between mt-3 text-xs">
+                            <span class="text-gray-500 font-semibold">📋 @p.TaskCount task@(p.TaskCount != 1 ? "s" : "")</span>
+                            <span class="text-gray-500 font-semibold">
+                                @if (p.Deadline.HasValue)
+                                {
+                                    <text>📅 @p.Deadline.Value.ToString("MMM dd, yyyy")</text>
+                                }
+                                else
+                                {
+                                    <text>No deadline</text>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-5">@Model.SidePanelTitle</h3>
+
+            <div class="space-y-4">
+                @foreach (var card in Model.SideStats)
+                {
+                    var (bg, border, label, value, sub) = card.Color switch
+                    {
+                        "emerald" => ("bg-gradient-to-br from-emerald-50 to-teal-50", "border-emerald-200", "text-emerald-700", "text-emerald-900", "text-emerald-700"),
+                        "purple" => ("bg-gradient-to-br from-purple-50 to-pink-50", "border-purple-200", "text-purple-700", "text-purple-900", "text-purple-700"),
+                        "amber" => ("bg-gradient-to-br from-amber-50 to-yellow-50", "border-amber-200", "text-amber-700", "text-amber-900", "text-amber-700"),
+                        _ => ("bg-gradient-to-br from-blue-50 to-indigo-50", "border-blue-200", "text-blue-700", "text-blue-900", "text-blue-700")
+                    };
+
+                    <div class="@bg border @border rounded-lg p-4">
+                        <p class="text-xs @label font-black uppercase tracking-wide mb-1">@card.Label</p>
+                        <p class="text-3xl font-black @value">@card.Value</p>
+                        <p class="text-sm @sub font-medium">@card.Subtitle</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold text-gray-900">@Model.RecentTasksTitle</h3>
+            <a asp-controller="Tasks" asp-action="Index" class="text-sm text-blue-600 font-bold hover:underline">View All</a>
+        </div>
+
+        <div class="overflow-x-auto">
+            @if (Model.RecentTasks.Count == 0)
+            {
+                <div class="text-center py-10 text-gray-400 italic">No recent tasks.</div>
+            }
+            else
+            {
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wide">
+                            <th class="text-left py-3 px-4 font-bold">Task</th>
+                            <th class="text-left py-3 px-4 font-bold">Project</th>
+                            <th class="text-left py-3 px-4 font-bold">Priority</th>
+                            <th class="text-left py-3 px-4 font-bold">Due Date</th>
+                            <th class="text-left py-3 px-4 font-bold">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach (var t in Model.RecentTasks)
+                        {
+                            var prioClass = t.Priority switch
+                            {
+                                "Critical" => "bg-red-100 text-red-700",
+                                "High" => "bg-red-100 text-red-700",
+                                "Medium" => "bg-amber-100 text-amber-700",
+                                _ => "bg-green-100 text-green-700"
+                            };
+
+                            var statusClass = t.Status switch
+                            {
+                                "Completed" => "bg-emerald-100 text-emerald-700",
+                                "Overdue" => "bg-red-100 text-red-700",
+                                "InProgress" => "bg-amber-100 text-amber-700",
+                                "Done" => "bg-blue-100 text-blue-700",
+                                "Planning" => "bg-purple-100 text-purple-700",
+                                _ => "bg-gray-100 text-gray-700"
+                            };
+
+                            var statusLabel = t.Status switch
+                            {
+                                "InProgress" => "IN PROGRESS",
+                                "Completed" => "COMPLETED",
+                                _ => t.Status.ToUpper()
+                            };
+
+                            var deadlineClass = t.Status == "Overdue"
+                            ? "text-red-600"
+                            : "text-gray-700";
+
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-4 px-4">
+                                    <p class="text-sm font-bold text-gray-900">@t.Title</p>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600 font-medium">@t.ProjectName</td>
+                                <td class="py-4 px-4">
+                                    <span class="px-2.5 py-1 @prioClass text-xs font-black rounded-full">@t.Priority.ToUpper()</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm font-semibold @deadlineClass">
+                                    @(t.Deadline?.ToString("MMM dd, yyyy") ?? "—")
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="px-2.5 py-1 @statusClass text-xs font-black rounded-full">@statusLabel</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Doughnut data from server ──
+        const completed = @Model.CompletedTasks;
+        const pending   = @Model.PendingTasks;
+        const overdue   = @Model.OverdueTasks;
+
+        // ── Bar chart data from server ──
+        const monthlyLabels    = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyLabels));
+        const monthlyCompleted = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyCompleted));
+        const monthlyPending   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyPending));
+
+        // ── Doughnut ──
+        const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
+        new Chart(doughnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending', 'Overdue'],
+                datasets: [{
+                    data: [completed, pending, overdue],
+                    backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                    borderWidth: 0,
+                    cutout: '70%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1f2937', padding: 10, cornerRadius: 8 }
+                }
+            }
+        });
+
+        // ── Bar chart ──
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        const barGradient = barCtx.createLinearGradient(0, 0, 0, 250);
+        barGradient.addColorStop(0, '#3B82F6');
+        barGradient.addColorStop(1, '#93C5FD');
+
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [
+                    {
+                        label: 'Completed',
+                        data: monthlyCompleted,
+                        backgroundColor: barGradient,
+                        borderRadius: 6,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.6
+                    },
+                    {
+                        label: 'Pending',
+                        data: monthlyPending,
+                        backgroundColor: '#F59E0B',
+                        borderRadius: 6,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: { usePointStyle: true, boxWidth: 8, font: { size: 12, family: 'Inter', weight: '600' } }
+                    },
+                    tooltip: { backgroundColor: '#1f2937', padding: 10, cornerRadius: 8 }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#F3F4F6', drawBorder: false },
+                        ticks: { color: '#9CA3AF', font: { size: 11, family: 'Inter' }, precision: 0 }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { color: '#6B7280', font: { size: 12, family: 'Inter', weight: '600' } }
+                    }
+                }
+            }
+        });
+    </script>
+}
