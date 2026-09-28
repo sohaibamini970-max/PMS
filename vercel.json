@@ -4,7 +4,21 @@
       "runtime": "container",
       "entrypoint": "Dockerfile.vercel" {
   "services": {
+    "web": {{
+  "services": {
     "web": {
+      "runtime": "container",
+      "root": "Project_Management_System",
+      "entrypoint": "Dockerfile.vercel"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": { "service": "web" }
+    }
+  ]
+}
       "runtime": "container",
       "root": ".",
       "entrypoint": "Dockerfile.vercel"
